@@ -1,1 +1,16 @@
-spring.application.name=LensLog
+spring:
+  datasource:
+    url: jdbc:sqlite:db.sqlite
+    driver-class-name: org.sqlite.JDBC
+    username: test
+    password: password
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    database-platform: org.hibernate.community.dialect.SQLiteDialect
+    show-sql: true
+
+jwt:
+  # ?? ?? 32?? ????? ?
+  secret: customConfigakdjfidfkemldmakldfjkejikdfmakmclkxmclmhsakfh
