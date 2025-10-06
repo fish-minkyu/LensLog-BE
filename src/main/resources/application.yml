@@ -7,7 +7,7 @@ spring:
 
   jpa:
     hibernate:
-      ddl-auto: update # create-drop, create, update
+      ddl-auto: create-drop # create-drop, create, update
     database-platform: org.hibernate.community.dialect.SQLiteDialect
     show-sql: true
 

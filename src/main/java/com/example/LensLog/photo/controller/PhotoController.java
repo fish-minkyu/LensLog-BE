@@ -1,7 +1,7 @@
 package com.example.LensLog.photo.controller;
 
 import com.example.LensLog.photo.dto.PhotoCursorPageDto;
-import com.example.LensLog.photo.entity.Photo;
+import com.example.LensLog.photo.dto.PhotoDto;
 import com.example.LensLog.photo.service.PhotoService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.io.InputStreamResource;
@@ -36,7 +36,7 @@ public class PhotoController {
 
     // 사진 단일 조회
     @GetMapping("/getOne/{photoId}")
-    public Photo getPhoto(@PathVariable("photoId") Long photoId) {
+    public PhotoDto getPhoto(@PathVariable("photoId") Long photoId) {
         return photoService.getPhoto(photoId);
     }
 

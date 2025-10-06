@@ -2,6 +2,7 @@ package com.example.LensLog.photo.service;
 
 import com.example.LensLog.common.HashGenerator;
 import com.example.LensLog.photo.dto.PhotoCursorPageDto;
+import com.example.LensLog.photo.dto.PhotoDto;
 import com.example.LensLog.photo.entity.Photo;
 import com.example.LensLog.photo.repo.PhotoRepository;
 import lombok.RequiredArgsConstructor;
@@ -99,14 +100,14 @@ public class PhotoService {
     // 사진 단일 조회
     // 트랜잭션 안에서 엔티티 변경 시 자동 DB 반영(더티 체킹)
     @Transactional
-    public Photo getPhoto(Long photoId) {
+    public PhotoDto getPhoto(Long photoId) {
         Photo photo = photoRepository.findById(photoId)
             .orElseThrow(() -> new IllegalArgumentException("Photo don't exists"));
 
         // 조회수 증가
         photo.increaseViews();
 
-        return photo;
+        return PhotoDto.fromEntity(photo);
     }
 
     // 사진 다운로드
