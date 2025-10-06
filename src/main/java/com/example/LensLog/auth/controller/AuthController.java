@@ -1,5 +1,6 @@
 package com.example.LensLog.auth.controller;
 
+import com.example.LensLog.auth.dto.UserDto;
 import com.example.LensLog.auth.entity.User;
 import com.example.LensLog.auth.jwt.JwtRequestDto;
 import com.example.LensLog.auth.jwt.JwtResponseDto;
@@ -18,7 +19,7 @@ public class AuthController {
 
     // 회원 가입
     @PostMapping("/join")
-    public User signUp(User user) {
+    public UserDto signUp(@RequestBody User user) {
         return authService.signUp(user);
     }
 

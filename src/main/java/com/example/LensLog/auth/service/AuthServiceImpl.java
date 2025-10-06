@@ -1,6 +1,7 @@
 package com.example.LensLog.auth.service;
 
 import com.example.LensLog.auth.CustomUserDetails;
+import com.example.LensLog.auth.dto.UserDto;
 import com.example.LensLog.auth.entity.User;
 import com.example.LensLog.auth.jwt.JwtRequestDto;
 import com.example.LensLog.auth.jwt.JwtResponseDto;
@@ -49,7 +50,7 @@ public class AuthServiceImpl implements AuthService {
 
     // 회원가입
     @Override
-    public User signUp(User user) {
+    public UserDto signUp(User user) {
         if (this.userExists(user.getUsername())) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
         }
@@ -60,7 +61,9 @@ public class AuthServiceImpl implements AuthService {
                 .password(passwordEncoder.encode(user.getPassword())) // 비밀번호 암호화
                 .build();
 
-            return userRepository.save(newUser);
+            userRepository.save(newUser);
+
+            return UserDto.fromEntity(newUser);
         } catch (ClassCastException e) {
             log.error("Failed Cast to: {}", CustomUserDetails.class);
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR);
