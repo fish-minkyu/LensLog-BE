@@ -7,10 +7,21 @@ spring:
 
   jpa:
     hibernate:
-      ddl-auto: update
+      ddl-auto: update # create-drop, create, update
     database-platform: org.hibernate.community.dialect.SQLiteDialect
     show-sql: true
 
 jwt:
   # ?? ?? 32?? ????? ?
   secret: customConfigakdjfidfkemldmakldfjkejikdfmakmclkxmclmhsakfh
+
+minio:
+  url: http://localhost:9000 # minio API 포트 주소
+  bucket:
+    photo:
+      name: photo # 사진 버킷 이름
+    thumbnail:
+      name: thumbnail  # 썸네일 버킷 이름
+  access:
+    name: mYYRwWTeR4IR9h4Db9lC   # access key
+    secret: 6VeJ8wMOpITTLMdrWqXaoAY0TSUW5ud55AbaW71t # secretKey key

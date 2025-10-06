@@ -27,7 +27,7 @@ public class WebSecurityConfig {
             // csrf 보안 해제
             .csrf(AbstractHttpConfigurer::disable)
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/auth/**")
+                .anyRequest()
                 .permitAll()
             )
             // JWT를 사용하기 때문에 보안 관련 세션 해제
