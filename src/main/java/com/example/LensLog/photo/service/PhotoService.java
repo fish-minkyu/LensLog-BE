@@ -20,6 +20,7 @@ import org.springframework.web.server.ResponseStatusException;
 import java.io.InputStream;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -29,9 +30,16 @@ import java.util.UUID;
 public class PhotoService {
     private final PhotoRepository photoRepository;
     private final MinioService minioService;
+    private final ThumbnailService thumbnailService;
 
     @Value("${minio.url}")
     private String minioApi;
+
+    @Value("${minio.bucket.photo.name}")
+    private String PHOTO_BUCKET;
+
+    @Value("${minio.bucket.thumbnail.name}")
+    private String THUMBNAIL_BUCKET;
 
     // 사진 단일 업로드
     @Transactional
@@ -65,13 +73,27 @@ public class PhotoService {
             .build();
 
         photoRepository.save(newPhoto);
+
+        // 6. 비동기로 썸네일 생성 트리거
+        thumbnailService.generateThumbnail(newPhoto.getPhotoId());
     }
 
     // 사진 목록 조회(Cursor 방식)
-    public PhotoCursorPageDto getListPhotoCursor() {
+    public PhotoCursorPageDto getListPhotoCursor(Long lastPhotoId, int pageSize) {
         log.info("...: DB에서 데이터 조회 중...");
+        List<Photo> photos = photoRepository.searchListCursor(lastPhotoId, pageSize);
 
-        throw new ResponseStatusException(HttpStatus.NOT_IMPLEMENTED);
+        // 가져온 데이터가 pageSize보다 많으면 다음 페이지가 존재한다.
+        boolean hasNext = photos.size() > pageSize;
+        List<Photo> currentPagePhotos = hasNext ? photos.subList(0, pageSize) : photos;
+
+        Long nextCursorId = null;
+        if (hasNext && !currentPagePhotos.isEmpty()) {
+            // 현재 페이지 마지막 사진 ID
+            nextCursorId = currentPagePhotos.get(currentPagePhotos.size() -1).getPhotoId();
+        }
+
+        return new PhotoCursorPageDto(currentPagePhotos, nextCursorId, hasNext);
     }
 
     // 사진 단일 조회
@@ -100,7 +122,7 @@ public class PhotoService {
             photo.increaseDownloads();
 
             // MinIO에서 사진 다운로드 트리거 호출
-            InputStream inputStream = minioService.downloadPhoto(photo.getStoredFileName());
+            InputStream inputStream = minioService.downloadPhoto(PHOTO_BUCKET, photo.getStoredFileName());
 
             // 파일 이름 인코딩: 한국 파일 이름 등에 대비
             String encoderFileName = URLEncoder.encode(photo.getFileName(), StandardCharsets.UTF_8.toString())
@@ -139,8 +161,10 @@ public class PhotoService {
             // DB에서 삭제
             photoRepository.delete(photo);
 
-            // MinIO에서 삭제
-            minioService.deletePhotoFile(photo);
+            // Photo 버킷 삭제
+            minioService.deleteFile(PHOTO_BUCKET, photo);
+            // Thumbnail 버킷 삭제
+            minioService.deleteFile(THUMBNAIL_BUCKET, photo);
         } catch (Exception e) {
             log.error("deletePhoto error: {}", e.getMessage());
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR);

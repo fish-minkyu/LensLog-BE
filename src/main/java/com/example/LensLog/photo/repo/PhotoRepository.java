@@ -9,7 +9,7 @@ import org.springframework.data.repository.query.Param;
 
 import java.util.Optional;
 
-public interface PhotoRepository extends JpaRepository<Photo, Long> {
+public interface PhotoRepository extends JpaRepository<Photo, Long>, QPhotoRepository {
     // 해시 값으로 이미지 조회
     Optional<Photo> findByHashValue(String hashValue);
 

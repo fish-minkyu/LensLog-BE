@@ -24,9 +24,6 @@ public class MinioService {
     @Value("${minio.bucket.photo.name}")
     private String PHOTO_BUCKET;
 
-    @Value("${minio.bucket.thumbnail.name}")
-    private String THUMBNAIL_BUCKET;
-
     // 사진 업로드 메소드
     @Transactional
     public String savePhotoFile(String storedFileName, MultipartFile multipartFile) throws Exception {
@@ -58,7 +55,7 @@ public class MinioService {
 
     // 사진 다운로드 메소드
     @Transactional
-    public InputStream downloadPhoto(String storedFileName)
+    public InputStream downloadPhoto(String bucketName, String storedFileName)
         throws
         MinioException,
         IOException,
@@ -67,7 +64,7 @@ public class MinioService {
         try {
             InputStream downloadPhoto = minioClient.getObject(
               GetObjectArgs.builder()
-                  .bucket(PHOTO_BUCKET)
+                  .bucket(bucketName)
                   .object(storedFileName)
                   .build()
             );
@@ -81,12 +78,24 @@ public class MinioService {
 
     // 사진 삭제 메소드
     @Transactional
-    public void deletePhotoFile(Photo photo) throws Exception {
+    public void deleteFile(String bucketName, Photo photo) throws Exception {
         minioClient.removeObject(
             RemoveObjectArgs.builder()
-                .bucket(PHOTO_BUCKET)
+                .bucket(bucketName)
                 .object(photo.getStoredFileName())
                 .build()
         );
     }
+
+    // MinIO에서 저장된 파일을 InputStream으로 반환한다.
+    public InputStream getFileInputStream(String storedFileName) throws Exception {
+        return minioClient.getObject(
+            GetObjectArgs.builder()
+                .bucket(PHOTO_BUCKET)
+                .object(storedFileName)
+                .build()
+        );
+    }
+
+    //
 }

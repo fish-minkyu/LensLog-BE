@@ -1,4 +1,4 @@
-package com.subject2.subscription.config;
+package com.example.LensLog.config;
 
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import jakarta.persistence.EntityManager;
