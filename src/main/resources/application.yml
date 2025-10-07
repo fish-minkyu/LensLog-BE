@@ -7,9 +7,18 @@ spring:
 
   jpa:
     hibernate:
-      ddl-auto: update # create-drop, create, update
+      ddl-auto: create-drop # create-drop, create, update
     database-platform: org.hibernate.community.dialect.SQLiteDialect
     show-sql: true
+
+  sql:
+    init:
+      mode: always
+
+  servlet:
+    multipart:
+      max-file-size: 10MB # 파일 하나의 최대 크기
+      max-request-size: 10MB # 한 요청의 최대 크기
 
 jwt:
   # ?? ?? 32?? ????? ?
