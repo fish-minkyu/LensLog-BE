@@ -2,6 +2,7 @@ package com.example.LensLog.auth.service;
 
 import com.example.LensLog.auth.CustomUserDetails;
 import com.example.LensLog.auth.dto.UserDto;
+import com.example.LensLog.auth.entity.RoleEnum;
 import com.example.LensLog.auth.entity.User;
 import com.example.LensLog.auth.jwt.JwtRequestDto;
 import com.example.LensLog.auth.jwt.JwtResponseDto;
@@ -45,6 +46,17 @@ public class AuthServiceImpl implements AuthService {
             signUp(User.builder()
                 .username("admin")
                 .password("a123")
+                .authority(RoleEnum.ROLE_ADMIN.name())
+                .build()
+            );
+        }
+
+        // 일반 사용자 계정 생성
+        if (!userExists("user")) {
+            signUp(User.builder()
+                .username("user")
+                .password("u123")
+                .authority(RoleEnum.ROLE_USER.name())
                 .build()
             );
         }
@@ -61,6 +73,7 @@ public class AuthServiceImpl implements AuthService {
             User newUser = User.builder()
                 .username(user.getUsername())
                 .password(passwordEncoder.encode(user.getPassword())) // 비밀번호 암호화
+                .authority(user.getAuthority())
                 .build();
 
             userRepository.save(newUser);
