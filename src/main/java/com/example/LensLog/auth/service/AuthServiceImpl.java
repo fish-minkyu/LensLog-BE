@@ -97,7 +97,7 @@ public class AuthServiceImpl implements AuthService {
 
         // 2. 비밀번호 대조
         // => 날 것의 비밀번호와 암호화된 비밀번호를 비교한다.
-        if (passwordEncoder.matches(dto.getPassword(), userDetails.getPassword())) {
+        if (!passwordEncoder.matches(dto.getPassword(), userDetails.getPassword())) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
         }
 
