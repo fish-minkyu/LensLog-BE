@@ -61,7 +61,7 @@ public class ThumbnailService {
                 ) {
                 // 썸네일 생성
                 Thumbnails.of(originalPhotoStream)
-                    .size(150, 150) // TODO: 사진 비율에 따라 사이즈 바꾸게 설정하기
+                    .width(150) // 최대 폭을 150px로 설정, 높이는 원본 비율에 맞춰 자동 조절
                     .toOutputStream(thumbnailOutputStream);
 
                 byte[] thumbnailBytes = thumbnailOutputStream.toByteArray();
