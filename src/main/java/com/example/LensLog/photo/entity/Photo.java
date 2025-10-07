@@ -1,6 +1,7 @@
 package com.example.LensLog.photo.entity;
 
 import com.example.LensLog.like.entity.Like;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -40,6 +41,7 @@ public class Photo {
     // Photo 하나는 여러 개의 Like를 가질 수 있다.
     @Builder.Default
     @OneToMany(mappedBy = "photo", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnore // Jackson이 이 필드를 직렬화하지 않도록 설정
     private List<Like> likes = new ArrayList<>();
 
     // 조회수 증가 메서드

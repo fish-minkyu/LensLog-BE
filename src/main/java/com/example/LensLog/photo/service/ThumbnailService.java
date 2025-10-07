@@ -2,6 +2,7 @@ package com.example.LensLog.photo.service;
 
 import com.example.LensLog.photo.entity.Photo;
 import com.example.LensLog.photo.entity.ThumbnailStatusEnum;
+import com.example.LensLog.photo.event.PhotoUploadEvent;
 import com.example.LensLog.photo.repo.PhotoRepository;
 import io.minio.BucketExistsArgs;
 import io.minio.MakeBucketArgs;
@@ -16,6 +17,8 @@ import org.springframework.retry.annotation.Retryable;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.event.TransactionPhase;
+import org.springframework.transaction.event.TransactionalEventListener;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -41,12 +44,18 @@ public class ThumbnailService {
         maxAttempts = 3,
         backoff = @Backoff(delay = 1000, multiplier = 2) // 지수 백오프: 1초, 2초, 4초
     )
+    // uploadPhoto 트랜잭션이 성공적으로 커밋된 후 호출
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    public void handlePhotoUploadEvent(PhotoUploadEvent event) throws Exception {
+        generateThumbnail(event.getPhotoId());
+    }
+
     @Transactional
     public void generateThumbnail(Long photoId) throws Exception {
         log.info("Started thumbnail generation for Photo ID: {}", photoId);
 
         Photo photo = photoRepository.findById(photoId)
-            .orElseThrow(() -> new IllegalArgumentException("The photo don't exist"));
+            .orElseThrow(() -> new IllegalArgumentException("The photo doesn't exist"));
 
         try {
             // 썸네일 생성 상태를 PROCESSING으로 변경한다.

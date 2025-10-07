@@ -4,10 +4,13 @@ import com.example.LensLog.common.HashGenerator;
 import com.example.LensLog.photo.dto.PhotoCursorPageDto;
 import com.example.LensLog.photo.dto.PhotoDto;
 import com.example.LensLog.photo.entity.Photo;
+import com.example.LensLog.photo.event.PhotoUploadEvent;
 import com.example.LensLog.photo.repo.PhotoRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -31,7 +34,7 @@ import java.util.UUID;
 public class PhotoService {
     private final PhotoRepository photoRepository;
     private final MinioService minioService;
-    private final ThumbnailService thumbnailService;
+    private final ApplicationEventPublisher eventPublisher; // 이벤트 퍼블리셔
 
     @Value("${minio.url}")
     private String minioApi;
@@ -75,11 +78,13 @@ public class PhotoService {
 
         photoRepository.save(newPhoto);
 
-        // 6. 비동기로 썸네일 생성 트리거
-        thumbnailService.generateThumbnail(newPhoto.getPhotoId());
+        // 6. 트랜잭션이 성공적으로 커밋된 후에 썸네일 생성을 위한 이벤트 발행
+        // @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT) 에 의해 처리
+        eventPublisher.publishEvent(new PhotoUploadEvent(newPhoto.getPhotoId()));
     }
 
     // 사진 목록 조회(Cursor 방식)
+    @Cacheable(value = "photoCursorPages", key = "#lastPhotoId + '_' + #pageSize")
     public PhotoCursorPageDto getListPhotoCursor(Long lastPhotoId, int pageSize) {
         log.info("...: DB에서 데이터 조회 중...");
         List<Photo> photos = photoRepository.searchListCursor(lastPhotoId, pageSize);
