@@ -5,6 +5,12 @@ spring:
     username: test
     password: password
 
+  data:
+    redis:
+      host: 127.0.0.1
+      port: 6379
+      password: 1234
+
   jpa:
     hibernate:
       ddl-auto: create-drop # create-drop, create, update

@@ -7,6 +7,7 @@ import com.example.LensLog.auth.jwt.JwtRequestDto;
 import com.example.LensLog.auth.jwt.JwtResponseDto;
 import com.example.LensLog.auth.jwt.JwtTokenUtils;
 import com.example.LensLog.auth.repo.UserRepository;
+import io.jsonwebtoken.ExpiredJwtException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -14,6 +15,7 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
+
 
 @Slf4j
 @Service
@@ -86,11 +88,62 @@ public class AuthServiceImpl implements AuthService {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
         }
 
-        // 3. JWT 발급
+        // 3. Access Token 발급
         String jwt = jwtTokenUtils.generateToken(userDetails);
 
+        // 4. Refresth Token 발급
+        String refreshToken = jwtTokenUtils.generateRefreshToken(userDetails);
+
         return JwtResponseDto.builder()
-            .token(jwt)
+            .accessToken(jwt)
+            .refreshToken(refreshToken)
+            .build();
+    }
+
+    // Access Token과 Refresh Token을 재발급
+    @Override
+    public JwtResponseDto reIssueTokens(String refreshToken) {
+        String username;
+        String redisKey;
+
+        try {
+            username = jwtTokenUtils.extractUsername(refreshToken);
+            redisKey = jwtTokenUtils.extractRediskey(refreshToken);
+        } catch (ExpiredJwtException e) {
+            // Refresh Token 자체도 만료된 경우
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Refresh Token has expired. Please log in again.");
+        } catch (IllegalArgumentException e) {
+            // 유효하지 않은 Refresh Token (형식 오류)
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid Refresh Token. Please log in again.");
+        }
+
+        // Redis에 저장된 Refresh Token인지 확인
+        String storedRefreshToken =
+            jwtTokenUtils.getRedisTemplate().opsForValue().get(redisKey);
+
+        if (storedRefreshToken == null || !storedRefreshToken.equals(refreshToken)) {
+            // Redis에 없거나 일치하지 않는다면 이미 만료되었거나, 탈취된 토큰일 수 있다.
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid or Revoked Refresh Token. Please log in again.");
+        }
+
+        // Refresh Token의 사용자 정보와 UserDetails의 사용자 정보 일치 확인
+        UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+        if (!jwtTokenUtils.validateToken(refreshToken, userDetails)) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Refresh Token validation failed for user.");
+        }
+
+        // 기존 Refresh Token 삭제 (Redis에서)
+        jwtTokenUtils.deleteRefreshToken(redisKey);
+
+        // 새로운 Access Token 발급
+        String newAccessToken = jwtTokenUtils.generateToken(userDetails);
+
+        // 새로운 Refresh Token 발급 및 Redis에 저장
+        String newRefreshToken = jwtTokenUtils.generateRefreshToken(userDetails);
+
+        return JwtResponseDto.builder()
+            .accessToken(newAccessToken)
+            .refreshToken(newRefreshToken)
             .build();
     }
 

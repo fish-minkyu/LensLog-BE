@@ -11,4 +11,7 @@ public interface AuthService {
 
     // 로그인
     JwtResponseDto login(JwtRequestDto dto);
+
+    // 토큰 재발급
+    JwtResponseDto reIssueTokens(String refreshToken);
 }

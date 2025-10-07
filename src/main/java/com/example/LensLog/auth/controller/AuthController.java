@@ -28,4 +28,10 @@ public class AuthController {
     public JwtResponseDto issueJwt(@RequestBody JwtRequestDto dto) {
         return authService.login(dto);
     }
+
+    // JWT 재발급 메서드
+    @PostMapping("/refresh")
+    public JwtResponseDto reIssueTokens(@RequestBody String refreshToken) {
+        return authService.reIssueTokens(refreshToken);
+    }
 }

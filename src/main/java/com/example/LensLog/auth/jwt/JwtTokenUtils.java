@@ -6,12 +6,16 @@ import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
+import org.springframework.data.redis.core.StringRedisTemplate;
 
 import java.security.Key;
-import java.sql.Date;
+import java.util.Date;
 import java.time.Instant;
+import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 // JWT 자체와 관련된 기능을 만드는 곳
 @Slf4j
@@ -21,10 +25,14 @@ public class JwtTokenUtils {
     private final Key signingKey;
     // JWT를 해석하는 용도의 객체
     private final JwtParser jwtParser; // parser: 특정한 형식의 문자열을 데이터로 다시 역직렬화하는 것
+    // Refresh Token을 Redis에 관리하기 위한 객체
+    private final StringRedisTemplate redisTemplate;
+
 
     public JwtTokenUtils(
         @Value("${jwt.secret}")
-        String jwtSecret
+        String jwtSecret,
+        StringRedisTemplate redisTemplate
     ) {
         log.info(jwtSecret);
         // jjwt에서 key를 활용하기 위한 준비
@@ -33,6 +41,7 @@ public class JwtTokenUtils {
             .parserBuilder()
             .setSigningKey(this.signingKey)
             .build();
+        this.redisTemplate = redisTemplate;
     }
 
     // UserDetails를 받아서 JWT로 변환하는 메서드
@@ -59,10 +68,9 @@ public class JwtTokenUtils {
             // iat: 언제 발급 되었는지
             .setIssuedAt(Date.from(now))
             // exp: 언제 만료 예정인지
-            .setExpiration(Date.from(now.plusSeconds(60 * 60 * 24 * 7))); // 일주일
+            .setExpiration(Date.from(now.plusSeconds(60 * 60 * 24))); // 하루
 
-        // 일반적인 JWT 외의 정보를 포함하고 싶다면
-        // Map.put 사용 가능(Map을 상속 받음)
+        //TODO authorities 엔티티 or Enum을 만들어서 추가해줘야 한다.
   /*
       jwtClaims.put("test", "claims");
   */
@@ -72,6 +80,34 @@ public class JwtTokenUtils {
             .setClaims(jwtClaims)
             .signWith(this.signingKey)
             .compact();
+    }
+
+    // Refresh Token을 발급하는 메서드
+    public String generateRefreshToken(UserDetails userDetails) {
+        ValueOperations<String, String> operations = redisTemplate.opsForValue();
+
+        // 현재 호출되었을 때 epoch time
+        Instant now = Instant.now();
+        String refreshTokenId = UUID.randomUUID().toString();
+
+        Claims jwtClaims = Jwts.claims()
+            .setId(refreshTokenId)
+            .setSubject(userDetails.getUsername())
+            .setIssuedAt(Date.from(now))
+            .setExpiration(Date.from(now.plusSeconds(60 * 60 * 24 * 7))); // 일주일
+
+        //TODO authorities 엔티티 or Enum을 만들어서 추가해줘야 한다.
+
+        // Refresh Token을 발급한다.
+        String refreshToken = Jwts.builder()
+            .setClaims(jwtClaims)
+            .signWith(this.signingKey)
+            .compact();
+
+        // Refresh 토큰을 Redis에 저장
+        operations.set(refreshTokenId, refreshToken, 7, TimeUnit.DAYS); // 7일간 저장
+
+        return refreshToken;
     }
 
     // 정상적인 JWT인지를 판단하는 메서드
@@ -92,5 +128,39 @@ public class JwtTokenUtils {
         return jwtParser
             .parseClaimsJws(token)
             .getBody();
+    }
+
+    // 토큰에서 사용자 이름을 추출하는 메소드
+    public String extractUsername(String token) {
+        return parseClaims(token).getSubject();
+    }
+
+    // Refresh Token에서 Redis의 key를 추출하는 메소드
+    public String extractRediskey(String token) {
+        return parseClaims(token).getId();
+    }
+
+    // 토큰 만료 여부를 확인하는 메소드
+    public boolean isTokenExpired(String token) {
+        Date expiration = parseClaims(token).getExpiration();
+        return expiration.before(new Date(System.currentTimeMillis()));
+    }
+
+    // 특정 사용자 정보와 토큰의 유효성 (만료 여부, 사용자 일치)을 함께 검증하는 메소드
+    public boolean validateToken(String token, UserDetails userDetails) {
+        final String username = extractUsername(token);
+        return (username.equals(userDetails.getUsername()) && !isTokenExpired(token));
+    }
+
+    // Redis에서 Refresh Token을 삭제하는 메소드
+    public void deleteRefreshToken(String redisKey) {
+        if (redisTemplate.hasKey(redisKey)) {
+            redisTemplate.delete(redisKey);
+        }
+    }
+
+    // RedisTemplate 접근자 (AuthService에서 Redis에 저장된 Refresh Token 값을 비교하기 위함)
+    public StringRedisTemplate getRedisTemplate() {
+        return redisTemplate;
     }
 }
