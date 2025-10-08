@@ -1,14 +1,10 @@
 package com.example.LensLog.auth.entity;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
+import jakarta.persistence.*;
 import lombok.*;
 
 @Entity
 @Getter
-@Setter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
@@ -20,4 +16,7 @@ public class User {
     private String username;
     private String password;
     private String authority;
+    @Setter
+    @Column(nullable = true) // 소셜 로그인일 때만 사용
+    private String email;
 }

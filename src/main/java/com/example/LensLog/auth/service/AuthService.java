@@ -12,6 +12,12 @@ public interface AuthService {
     // 로그인
     JwtResponseDto login(JwtRequestDto dto);
 
+    // 사용자 존재 유무 확인
+    boolean userExists(String username);
+
     // 토큰 재발급
     JwtResponseDto reIssueTokens(String refreshToken);
+
+    // 사용자 존재 유무 email로 확인
+    boolean existsByEmail(String email);
 }

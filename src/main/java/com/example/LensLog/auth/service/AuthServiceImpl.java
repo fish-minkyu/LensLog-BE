@@ -161,7 +161,14 @@ public class AuthServiceImpl implements AuthService {
     }
 
     // 사용자 존재 유무 확인
+    @Override
     public boolean userExists(String username) {
         return userRepository.existsByUsername(username);
+    }
+
+    // 사용자 존재 유무 email로 확인
+    @Override
+    public boolean existsByEmail(String email) {
+        return userRepository.existsByEmail(email);
     }
 }

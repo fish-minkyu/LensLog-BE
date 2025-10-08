@@ -6,9 +6,12 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.Optional;
 
 public interface UserRepository extends JpaRepository<User, Long> {
-    // 사용자 이름으로 유저 찾기
+    // 사용자 이름으로 사용자 찾기
     Optional<User> findByUsername(String username);
 
-    // 사용자 이름으로 유저가 있는지 유무 확인
+    // 사용자 이름으로 사용자가 있는지 유무 확인
     boolean existsByUsername(String username);
+
+    // 사용자 email로 사용자가 있는지 유무 확인
+    boolean existsByEmail(String email);
 }

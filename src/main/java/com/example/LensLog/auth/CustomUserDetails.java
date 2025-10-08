@@ -18,6 +18,7 @@ public class CustomUserDetails implements UserDetails {
     private String username;
     private String password;
     private String authority;
+    private String email;
 
     @Override
     public String getUsername() {
