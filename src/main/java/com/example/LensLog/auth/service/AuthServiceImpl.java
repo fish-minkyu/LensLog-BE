@@ -9,7 +9,10 @@ import com.example.LensLog.auth.jwt.JwtResponseDto;
 import com.example.LensLog.auth.jwt.JwtTokenUtils;
 import com.example.LensLog.auth.repo.UserRepository;
 import io.jsonwebtoken.ExpiredJwtException;
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
+import org.checkerframework.checker.units.qual.C;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -87,7 +90,29 @@ public class AuthServiceImpl implements AuthService {
 
     // 로그인
     @Override
-    public JwtResponseDto login(JwtRequestDto dto) {
+    public void login(JwtRequestDto dto, HttpServletResponse response) {
+        JwtResponseDto tokens = issueTokens(dto);
+
+        // Access Token을 쿠키에 담아 응답에 추가한다.
+        Cookie jwtCookie = new Cookie("auth_token", tokens.getAccessToken());
+        jwtCookie.setHttpOnly(false);
+        jwtCookie.setSecure(false); // HTTPS 연결에서만 사용할지 여부
+        jwtCookie.setPath("/"); // 모든 경로에서 접근 가능
+
+        response.addCookie(jwtCookie);
+
+        // Refresh Token을 쿠키에 담아 응답에 추가한다.
+        Cookie refreshTokenCookie = new Cookie("refresh_token", tokens.getRefreshToken());
+        refreshTokenCookie.setHttpOnly(false);
+        refreshTokenCookie.setSecure(false); // HTTPS 연결에서만 사용할지 여부
+        refreshTokenCookie.setPath("/"); // 모든 경로에서 접근 가능
+
+        response.addCookie(refreshTokenCookie);
+    }
+
+    // Access Token & Refresh Token 발급
+    @Override
+    public JwtResponseDto issueTokens(JwtRequestDto dto) {
         // 1. 사용자가 제공한 username이 저장된 사용자인지 판단
         if (!this.userExists(dto.getUsername())) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND);

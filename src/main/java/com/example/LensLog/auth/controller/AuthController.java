@@ -5,7 +5,9 @@ import com.example.LensLog.auth.entity.User;
 import com.example.LensLog.auth.jwt.JwtRequestDto;
 import com.example.LensLog.auth.jwt.JwtResponseDto;
 import com.example.LensLog.auth.service.AuthService;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -23,15 +25,25 @@ public class AuthController {
         return authService.signUp(user);
     }
 
-    // JWT 발급 메서드(로그인)
-    @PostMapping("/issue")
-    public JwtResponseDto issueJwt(@RequestBody JwtRequestDto dto) {
-        return authService.login(dto);
+    // 로그인
+    @PostMapping("/login")
+    public ResponseEntity<String> login(
+        @RequestBody JwtRequestDto dto,
+        HttpServletResponse response
+    ) {
+        authService.login(dto, response);
+        return ResponseEntity.ok("Login Success");
     }
 
     // JWT 재발급 메서드
     @PostMapping("/refresh")
     public JwtResponseDto reIssueTokens(@RequestBody String refreshToken) {
         return authService.reIssueTokens(refreshToken);
+    }
+
+    // JWT 발급 메서드(테스트용)
+    @PostMapping("/issue/test")
+    public JwtResponseDto issueJwt(@RequestBody JwtRequestDto dto) {
+        return authService.issueTokens(dto);
     }
 }
