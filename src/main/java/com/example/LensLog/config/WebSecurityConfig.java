@@ -2,6 +2,8 @@ package com.example.LensLog.config;
 
 import com.example.LensLog.auth.jwt.JwtTokenFilter;
 import com.example.LensLog.auth.jwt.JwtTokenUtils;
+import com.example.LensLog.auth.oatuh.OAuth2SuccessHandler;
+import com.example.LensLog.auth.oatuh.OAuth2UserServiceImpl;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -18,6 +20,8 @@ import org.springframework.security.web.access.intercept.AuthorizationFilter;
 public class WebSecurityConfig {
     private final JwtTokenUtils jwtTokenUtils;
     private final UserDetailsService manager;
+    private final OAuth2SuccessHandler oAuth2SuccessHandler;
+    private final OAuth2UserServiceImpl oAuth2UserService;
 
     // Http 관련 보안 설정하는 객체
     @Bean
@@ -64,6 +68,14 @@ public class WebSecurityConfig {
                 .anyRequest()
                 .permitAll()
             )
+            // OAuth
+            .oauth2Login(oauth2Login -> oauth2Login
+                .loginPage("/user/login")
+                .successHandler(oAuth2SuccessHandler)
+                .userInfoEndpoint(userInfo -> userInfo
+                    .userService(oAuth2UserService))
+            )
+
             // JWT를 사용하기 때문에 보안 관련 세션 해제
             .sessionManagement(session -> session
                 // 세션을 저장하지 않는다.
