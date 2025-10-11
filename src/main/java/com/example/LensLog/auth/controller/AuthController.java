@@ -5,6 +5,7 @@ import com.example.LensLog.auth.entity.User;
 import com.example.LensLog.auth.jwt.JwtRequestDto;
 import com.example.LensLog.auth.jwt.JwtResponseDto;
 import com.example.LensLog.auth.service.AuthService;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -13,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+@Tag(name = "Auth Controller", description = "사용자 관련 API")
 @RestController
 @RequestMapping("/auth")
 @RequiredArgsConstructor

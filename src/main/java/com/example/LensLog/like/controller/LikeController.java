@@ -1,9 +1,11 @@
 package com.example.LensLog.like.controller;
 
 import com.example.LensLog.like.service.LikeService;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
+@Tag(name = "Like Controller", description = "좋아요 기능 관련 API")
 @RestController
 @RequestMapping("/like")
 @RequiredArgsConstructor

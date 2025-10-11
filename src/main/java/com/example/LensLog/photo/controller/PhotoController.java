@@ -3,6 +3,7 @@ package com.example.LensLog.photo.controller;
 import com.example.LensLog.photo.dto.PhotoCursorPageDto;
 import com.example.LensLog.photo.dto.PhotoDto;
 import com.example.LensLog.photo.service.PhotoService;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.ResponseEntity;
@@ -10,6 +11,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 
+@Tag(name = "Photo Controller", description = "사진 관련 API")
 @RestController
 @RequestMapping("/photo")
 @RequiredArgsConstructor
