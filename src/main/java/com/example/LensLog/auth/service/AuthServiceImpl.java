@@ -12,7 +12,6 @@ import io.jsonwebtoken.ExpiredJwtException;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
-import org.checkerframework.checker.units.qual.C;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -24,7 +23,7 @@ import org.springframework.web.server.ResponseStatusException;
 @Slf4j
 @Service
 public class AuthServiceImpl implements AuthService {
-    // 1. 유저 정보를 가져오기 위한 레포지토리
+    // 1. 사용자 정보를 가져오기 위한 레포지토리
     private final UserRepository userRepository;
     // 2. JWT를 발급하기 위한 Bean
     private final JwtTokenUtils jwtTokenUtils;

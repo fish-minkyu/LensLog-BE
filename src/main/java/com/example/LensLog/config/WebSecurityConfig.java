@@ -70,7 +70,7 @@ public class WebSecurityConfig {
             )
             // OAuth
             .oauth2Login(oauth2Login -> oauth2Login
-                .loginPage("/auth/login")
+                .loginPage("/auth/social/login")
                 .successHandler(oAuth2SuccessHandler)
                 .userInfoEndpoint(userInfo -> userInfo
                     .userService(oAuth2UserService))

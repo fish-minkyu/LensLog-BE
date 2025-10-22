@@ -27,8 +27,8 @@ public class AuthController {
         return authService.signUp(user);
     }
 
-    // 로그인
-    @PostMapping("/login")
+    // 로그인(소셜 로그인용)
+    @PostMapping("/social/login")
     public ResponseEntity<String> login(
         @RequestBody JwtRequestDto dto,
         HttpServletResponse response
@@ -37,15 +37,15 @@ public class AuthController {
         return ResponseEntity.ok("Login Success");
     }
 
+    // 로그인(로컬 로그인용)
+    @PostMapping("/issue")
+    public JwtResponseDto issueJwt(@RequestBody JwtRequestDto dto) {
+        return authService.issueTokens(dto);
+    }
+
     // JWT 재발급 메서드
     @PostMapping("/refresh")
     public JwtResponseDto reIssueTokens(@RequestBody String refreshToken) {
         return authService.reIssueTokens(refreshToken);
-    }
-
-    // JWT 발급 메서드(테스트용)
-    @PostMapping("/issue/test")
-    public JwtResponseDto issueJwt(@RequestBody JwtRequestDto dto) {
-        return authService.issueTokens(dto);
     }
 }
