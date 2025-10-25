@@ -31,6 +31,9 @@ public class AuthServiceImpl implements AuthService {
     private final PasswordEncoder passwordEncoder;
     // 4. 사용자 정보를 가지고 오는 서비스
     private final UserDetailsService userDetailsService;
+    // 5. 비밀번호 양식 확인(최소 8자리, 최소 1개의 대문자, 최소 1개의 특수문자를 필수 포함)
+    private static final String PASSWORD_REGEX
+        = "^(?=.*[A-Z])(?=.*[!@#$%^&*()_+\\-=\\[\\]{};':\"\\\\|,.<>\\/?]).{8,}$";
 
     public AuthServiceImpl(
         UserRepository userRepository,
@@ -67,8 +70,20 @@ public class AuthServiceImpl implements AuthService {
     // 회원가입
     @Override
     public UserDto signUp(User user) {
+        // 사용자 이름 중복 검사
         if (this.userExists(user.getUsername())) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
+            throw new ResponseStatusException(
+                HttpStatus.BAD_REQUEST,
+                "This username already exist");
+        }
+
+        // 비밀번호 유효성 검사
+        if (!isPasswordValid(user.getPassword())) {
+            throw new ResponseStatusException(
+                HttpStatus.BAD_REQUEST,
+                "Password must be at least 8 characters long. including at least one uppercase letter" +
+                    "and special character"
+            );
         }
 
         try {
@@ -85,6 +100,10 @@ public class AuthServiceImpl implements AuthService {
             log.error("Failed Cast to: {}", CustomUserDetails.class);
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR);
         }
+    }
+
+    private boolean isPasswordValid(String password) {
+        return password.matches(PASSWORD_REGEX);
     }
 
     // 로그인
