@@ -7,6 +7,7 @@ import com.example.LensLog.auth.entity.User;
 import com.example.LensLog.auth.jwt.JwtRequestDto;
 import com.example.LensLog.auth.jwt.JwtResponseDto;
 import com.example.LensLog.auth.jwt.JwtTokenUtils;
+import com.example.LensLog.auth.jwt.RefreshTokenDto;
 import com.example.LensLog.auth.repo.UserRepository;
 import io.jsonwebtoken.ExpiredJwtException;
 import jakarta.servlet.http.Cookie;
@@ -158,7 +159,8 @@ public class AuthServiceImpl implements AuthService {
 
     // Access Token과 Refresh Token을 재발급
     @Override
-    public JwtResponseDto reIssueTokens(String refreshToken) {
+    public JwtResponseDto reIssueTokens(RefreshTokenDto dto) {
+        String refreshToken = dto.getRefreshToken();
         String username;
         String redisKey;
 

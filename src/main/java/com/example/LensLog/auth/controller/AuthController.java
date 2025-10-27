@@ -4,6 +4,7 @@ import com.example.LensLog.auth.dto.UserDto;
 import com.example.LensLog.auth.entity.User;
 import com.example.LensLog.auth.jwt.JwtRequestDto;
 import com.example.LensLog.auth.jwt.JwtResponseDto;
+import com.example.LensLog.auth.jwt.RefreshTokenDto;
 import com.example.LensLog.auth.service.AuthService;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletResponse;
@@ -45,7 +46,7 @@ public class AuthController {
 
     // JWT 재발급 메서드
     @PostMapping("/refresh")
-    public JwtResponseDto reIssueTokens(@RequestBody String refreshToken) {
-        return authService.reIssueTokens(refreshToken);
+    public JwtResponseDto reIssueTokens(@RequestBody RefreshTokenDto dto) {
+        return authService.reIssueTokens(dto);
     }
 }
