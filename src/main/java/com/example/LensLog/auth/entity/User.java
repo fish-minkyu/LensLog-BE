@@ -15,8 +15,8 @@ public class User {
 
     private String username;
     private String password;
-    private String authority;
+
     @Setter
-    @Column(nullable = true) // 소셜 로그인일 때만 사용
     private String email;
+    private String authority;
 }

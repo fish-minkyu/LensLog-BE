@@ -4,11 +4,9 @@ import com.example.LensLog.auth.CustomUserDetails;
 import com.example.LensLog.auth.dto.UserDto;
 import com.example.LensLog.auth.entity.RoleEnum;
 import com.example.LensLog.auth.entity.User;
-import com.example.LensLog.auth.jwt.JwtRequestDto;
-import com.example.LensLog.auth.jwt.JwtResponseDto;
 import com.example.LensLog.auth.jwt.JwtTokenUtils;
-import com.example.LensLog.auth.jwt.RefreshTokenDto;
 import com.example.LensLog.auth.repo.UserRepository;
+import com.example.LensLog.constant.TokenConstant;
 import io.jsonwebtoken.ExpiredJwtException;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
@@ -49,9 +47,10 @@ public class AuthServiceImpl implements AuthService {
 
         // 관리자 계정 생성
         if (!userExists("admin")) {
-            signUp(User.builder()
+            signUp(UserDto.builder()
                 .username("admin")
-                .password("a123")
+                .password("A123456!")
+                .email("admin@lenslong.io")
                 .authority(RoleEnum.ROLE_ADMIN.name())
                 .build()
             );
@@ -59,9 +58,10 @@ public class AuthServiceImpl implements AuthService {
 
         // 일반 사용자 계정 생성
         if (!userExists("user")) {
-            signUp(User.builder()
+            signUp(UserDto.builder()
                 .username("user")
-                .password("u123")
+                .password("U123456!")
+                .email("user@lenslong.io")
                 .authority(RoleEnum.ROLE_USER.name())
                 .build()
             );
@@ -70,16 +70,16 @@ public class AuthServiceImpl implements AuthService {
 
     // 회원가입
     @Override
-    public UserDto signUp(User user) {
+    public UserDto signUp(UserDto dto) {
         // 사용자 이름 중복 검사
-        if (this.userExists(user.getUsername())) {
+        if (this.userExists(dto.getUsername())) {
             throw new ResponseStatusException(
                 HttpStatus.BAD_REQUEST,
                 "This username already exist");
         }
 
         // 비밀번호 유효성 검사
-        if (!isPasswordValid(user.getPassword())) {
+        if (!isPasswordValid(dto.getPassword())) {
             throw new ResponseStatusException(
                 HttpStatus.BAD_REQUEST,
                 "Password must be at least 8 characters long. including at least one uppercase letter" +
@@ -89,9 +89,9 @@ public class AuthServiceImpl implements AuthService {
 
         try {
             User newUser = User.builder()
-                .username(user.getUsername())
-                .password(passwordEncoder.encode(user.getPassword())) // 비밀번호 암호화
-                .authority(user.getAuthority())
+                .username(dto.getUsername())
+                .password(passwordEncoder.encode(dto.getPassword())) // 비밀번호 암호화
+                .authority(dto.getAuthority())
                 .build();
 
             userRepository.save(newUser);
@@ -109,29 +109,7 @@ public class AuthServiceImpl implements AuthService {
 
     // 로그인
     @Override
-    public void login(JwtRequestDto dto, HttpServletResponse response) {
-        JwtResponseDto tokens = issueTokens(dto);
-
-        // Access Token을 쿠키에 담아 응답에 추가한다.
-        Cookie jwtCookie = new Cookie("auth_token", tokens.getAccessToken());
-        jwtCookie.setHttpOnly(false);
-        jwtCookie.setSecure(false); // HTTPS 연결에서만 사용할지 여부
-        jwtCookie.setPath("/"); // 모든 경로에서 접근 가능
-
-        response.addCookie(jwtCookie);
-
-        // Refresh Token을 쿠키에 담아 응답에 추가한다.
-        Cookie refreshTokenCookie = new Cookie("refresh_token", tokens.getRefreshToken());
-        refreshTokenCookie.setHttpOnly(false);
-        refreshTokenCookie.setSecure(false); // HTTPS 연결에서만 사용할지 여부
-        refreshTokenCookie.setPath("/"); // 모든 경로에서 접근 가능
-
-        response.addCookie(refreshTokenCookie);
-    }
-
-    // Access Token & Refresh Token 발급
-    @Override
-    public JwtResponseDto issueTokens(JwtRequestDto dto) {
+    public void login(UserDto dto, HttpServletResponse response) {
         // 1. 사용자가 제공한 username이 저장된 사용자인지 판단
         if (!this.userExists(dto.getUsername())) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND);
@@ -145,22 +123,28 @@ public class AuthServiceImpl implements AuthService {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
         }
 
-        // 3. Access Token 발급
+        // 3. 토큰 발급(Cookie에 추가)
+        issueTokens(userDetails, response);
+    }
+
+    // Access Token & Refresh Token 발급
+    @Override
+    public void issueTokens(UserDetails userDetails, HttpServletResponse response) {
+        // Access Token 발급
         String jwt = jwtTokenUtils.generateToken(userDetails);
 
-        // 4. Refresth Token 발급
+        // Refresth Token 발급
         String refreshToken = jwtTokenUtils.generateRefreshToken(userDetails);
 
-        return JwtResponseDto.builder()
-            .accessToken(jwt)
-            .refreshToken(refreshToken)
-            .build();
+        // Access Token을 쿠키에 담아 응답에 추가한다.
+        makeCookie(TokenConstant.ACCESS_TOKEN, jwt, response);
+        // Refresh Token을 쿠키에 담아 응답에 추가한다.
+        makeCookie(TokenConstant.REFRESH_TOKEN, refreshToken, response);
     }
 
     // Access Token과 Refresh Token을 재발급
     @Override
-    public JwtResponseDto reIssueTokens(RefreshTokenDto dto) {
-        String refreshToken = dto.getRefreshToken();
+    public void reIssueTokens(String refreshToken, HttpServletResponse response) {
         String username;
         String redisKey;
 
@@ -193,16 +177,13 @@ public class AuthServiceImpl implements AuthService {
         // 기존 Refresh Token 삭제 (Redis에서)
         jwtTokenUtils.deleteRefreshToken(redisKey);
 
-        // 새로운 Access Token 발급
+        // 새로운 Access Token 발급 및 Cookie로 반환
         String newAccessToken = jwtTokenUtils.generateToken(userDetails);
+        makeCookie(TokenConstant.ACCESS_TOKEN, newAccessToken, response);
 
-        // 새로운 Refresh Token 발급 및 Redis에 저장
+        // 새로운 Refresh Token 발급 및 Cookie로 반환
         String newRefreshToken = jwtTokenUtils.generateRefreshToken(userDetails);
-
-        return JwtResponseDto.builder()
-            .accessToken(newAccessToken)
-            .refreshToken(newRefreshToken)
-            .build();
+        makeCookie(TokenConstant.REFRESH_TOKEN, newRefreshToken, response);
     }
 
     // 사용자 존재 유무 확인
@@ -215,5 +196,26 @@ public class AuthServiceImpl implements AuthService {
     @Override
     public boolean existsByEmail(String email) {
         return userRepository.existsByEmail(email);
+    }
+
+    // 쿠키를 만들어 응답에 넣는 메서드
+    private void makeCookie(String cookieName, String token, HttpServletResponse response) {
+        Cookie cookie = new Cookie(cookieName, token);
+        cookie.setHttpOnly(true); // XSS 공격 방지
+        cookie.setSecure(false);  // HTTPS에서만 전송 (네트워크 스니핑 방지) -> 개발 중이어서 false
+        cookie.setPath("/"); // 모든 경로에서 접근 가능
+
+        response.addCookie(cookie);
+    }
+
+    // 쿠키 삭제 메서드
+    private void deleteCookie(String cookieName, HttpServletResponse response) {
+        Cookie cookie = new Cookie(cookieName, null);
+        cookie.setMaxAge(0);
+        cookie.setHttpOnly(true);
+        cookie.setSecure(false);
+        cookie.setPath("/");
+
+        response.addCookie(cookie);
     }
 }

@@ -10,10 +10,15 @@ import lombok.*;
 @AllArgsConstructor
 public class UserDto {
     private String username;
+    private String password;
+    private String email;
+    private String authority;
 
     public static UserDto fromEntity(User entity) {
         return UserDto.builder()
             .username(entity.getUsername())
+            .email(entity.getEmail())
+            .authority(entity.getAuthority())
             .build();
     }
 }

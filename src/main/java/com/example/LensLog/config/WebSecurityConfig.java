@@ -34,34 +34,34 @@ public class WebSecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 // 전부 허가
                 .requestMatchers(HttpMethod.GET,
-                    "/photo/getList",
-                    "/photo/getOne/{photoId}"
+                    "/api/photo/getList",
+                    "/api/photo/getOne/{photoId}"
                 )
                 .permitAll()
                 // 익명 사용자 권한
                 .requestMatchers(HttpMethod.POST,
-                    "/auth/join",
-                    "/auth/issue"
+                    "/api/auth/join",
+                    "/api/auth/login"
                     )
                 .anonymous()
                 // 로그인 권한
                 .requestMatchers(HttpMethod.GET,
-                    "/photo/download/{photoId}",
-                    "/like/good",
-                    "/like/delete"
+                    "/api/photo/download/{photoId}",
+                    "/api/like/good",
+                    "/api/like/delete"
                 )
                 .authenticated()
                 .requestMatchers(HttpMethod.POST,
-                    "/auth/refresh"
+                    "/api/auth/refresh"
                     )
                 .authenticated()
                 // 관리자 권한
                 .requestMatchers(HttpMethod.POST,
-                    "/photo/upload"
+                    "/api/photo/upload"
                     )
                 .hasRole("ADMIN")
                 .requestMatchers(HttpMethod.DELETE,
-                    "/photo/delete/{photoId}"
+                    "/api/photo/delete/{photoId}"
                     )
                 .hasRole("ADMIN")
                 // 그 외는 전부 허가
@@ -70,7 +70,6 @@ public class WebSecurityConfig {
             )
             // OAuth
             .oauth2Login(oauth2Login -> oauth2Login
-                .loginPage("/auth/social/login")
                 .successHandler(oAuth2SuccessHandler)
                 .userInfoEndpoint(userInfo -> userInfo
                     .userService(oAuth2UserService))

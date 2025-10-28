@@ -17,6 +17,7 @@ import java.util.Map;
 // DefaultOAuth2UserService
 // : 기본적인 OAuth2 인증 과정을 진행해주는 클래스
 // => OAuth2 인증 이후 사용자 데이터를 요청하는 부분
+// 사용자 정보 처리
 @Slf4j
 @Service
 public class OAuth2UserServiceImpl extends DefaultOAuth2UserService {

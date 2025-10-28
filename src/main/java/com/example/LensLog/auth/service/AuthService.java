@@ -1,27 +1,24 @@
 package com.example.LensLog.auth.service;
 
 import com.example.LensLog.auth.dto.UserDto;
-import com.example.LensLog.auth.entity.User;
-import com.example.LensLog.auth.jwt.JwtRequestDto;
-import com.example.LensLog.auth.jwt.JwtResponseDto;
-import com.example.LensLog.auth.jwt.RefreshTokenDto;
 import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.security.core.userdetails.UserDetails;
 
 public interface AuthService {
     // 회원가입
-    UserDto signUp(User user);
+    UserDto signUp(UserDto dto);
 
     // Access Token & Refresh Token 발급
-    JwtResponseDto issueTokens(JwtRequestDto dto);
+    void issueTokens(UserDetails userDetails, HttpServletResponse response);
 
     // 사용자 존재 유무 확인
     boolean userExists(String username);
 
     // 로그인
-    void login(JwtRequestDto dto, HttpServletResponse response);
+    void login(UserDto dto, HttpServletResponse response);
 
     // 토큰 재발급
-    JwtResponseDto reIssueTokens(RefreshTokenDto dto);
+    void reIssueTokens(String refreshToken, HttpServletResponse response);
 
     // 사용자 존재 유무 email로 확인
     boolean existsByEmail(String email);
