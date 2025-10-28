@@ -14,6 +14,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -110,17 +111,23 @@ public class AuthServiceImpl implements AuthService {
     // 로그인
     @Override
     public void login(UserDto dto, HttpServletResponse response) {
-        // 1. 사용자가 제공한 username이 저장된 사용자인지 판단
-        if (!this.userExists(dto.getUsername())) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND);
-        }
+        UserDetails userDetails;
 
-        UserDetails userDetails = userDetailsService.loadUserByUsername(dto.getUsername());
+        try {
+            // 1. 사용자 정보 조회
+            userDetails = userDetailsService.loadUserByUsername(dto.getUsername());
+        } catch (UsernameNotFoundException e) {
+            throw new ResponseStatusException(
+                HttpStatus.UNAUTHORIZED,
+                "Invalid username or password");
+        }
 
         // 2. 비밀번호 대조
         // => 날 것의 비밀번호와 암호화된 비밀번호를 비교한다.
         if (!passwordEncoder.matches(dto.getPassword(), userDetails.getPassword())) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
+            throw new ResponseStatusException(
+                HttpStatus.UNAUTHORIZED,
+                "Invalid username or password");
         }
 
         // 3. 토큰 발급(Cookie에 추가)
