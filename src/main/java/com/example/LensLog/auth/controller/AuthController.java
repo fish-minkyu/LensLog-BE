@@ -24,12 +24,33 @@ public class AuthController {
 
     // 로그인
     @PostMapping("/login")
-    public ResponseEntity<String> socialLogin(
+    public ResponseEntity<String> login(
         @RequestBody UserDto dto,
         HttpServletResponse response
     ) {
         authService.login(dto, response);
         return ResponseEntity.ok("Login Success");
+    }
+
+    // 로그아웃
+    @PostMapping("/logout")
+    public ResponseEntity<String> logout(
+        @CookieValue(name = TokenConstant.REFRESH_TOKEN) String refreshToken,
+        HttpServletResponse response
+    ) {
+        authService.logout(refreshToken, response);
+        return null;
+    }
+
+    // 회원탈퇴
+    @DeleteMapping("/delete")
+    public ResponseEntity<String> deleteUser(
+        @CookieValue(name = TokenConstant.REFRESH_TOKEN) String refreshToken,
+        @RequestBody UserDto dto,
+        HttpServletResponse response
+    ) {
+        authService.deleteUser(refreshToken, dto.getPassword(), response);
+        return null;
     }
 
     // JWT 재발급 메서드

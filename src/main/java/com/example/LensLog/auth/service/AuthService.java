@@ -22,4 +22,10 @@ public interface AuthService {
 
     // 사용자 존재 유무 email로 확인
     boolean existsByEmail(String email);
+
+    // 로그아웃
+    void logout(String refreshToken, HttpServletResponse response);
+
+    // 회원탈퇴
+    void deleteUser(String refreshToken, String password, HttpServletResponse response);
 }

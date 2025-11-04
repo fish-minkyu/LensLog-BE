@@ -88,6 +88,7 @@ public class JwtTokenUtils {
 
         // 현재 호출되었을 때 epoch time
         Instant now = Instant.now();
+        // 다중세션 관리, 동일 사용자가 클라이언트별 동시 접속이 가능하게 설정
         String refreshTokenId = UUID.randomUUID().toString();
 
         Claims jwtClaims = Jwts.claims()
@@ -95,8 +96,6 @@ public class JwtTokenUtils {
             .setSubject(userDetails.getUsername())
             .setIssuedAt(Date.from(now))
             .setExpiration(Date.from(now.plusSeconds(60 * 60 * 24 * 7))); // 일주일
-
-        //TODO authorities 엔티티 or Enum을 만들어서 추가해줘야 한다.
 
         // Refresh Token을 발급한다.
         String refreshToken = Jwts.builder()

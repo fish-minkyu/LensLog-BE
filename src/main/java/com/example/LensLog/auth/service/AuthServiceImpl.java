@@ -6,12 +6,14 @@ import com.example.LensLog.auth.entity.RoleEnum;
 import com.example.LensLog.auth.entity.User;
 import com.example.LensLog.auth.jwt.JwtTokenUtils;
 import com.example.LensLog.auth.repo.UserRepository;
+import com.example.LensLog.common.AuthenticationFacade;
 import com.example.LensLog.constant.TokenConstant;
 import io.jsonwebtoken.ExpiredJwtException;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -31,7 +33,9 @@ public class AuthServiceImpl implements AuthService {
     private final PasswordEncoder passwordEncoder;
     // 4. 사용자 정보를 가지고 오는 서비스
     private final UserDetailsService userDetailsService;
-    // 5. 비밀번호 양식 확인(최소 8자리, 최소 1개의 대문자, 최소 1개의 특수문자를 필수 포함)
+    // 5. 사용자 인증 정보를 가지고 오는 Util 메서드
+    private final AuthenticationFacade auth;
+    // 6. 비밀번호 양식 확인(최소 8자리, 최소 1개의 대문자, 최소 1개의 특수문자를 필수 포함)
     private static final String PASSWORD_REGEX
         = "^(?=.*[A-Z])(?=.*[!@#$%^&*()_+\\-=\\[\\]{};':\"\\\\|,.<>\\/?]).{8,}$";
 
@@ -39,12 +43,14 @@ public class AuthServiceImpl implements AuthService {
         UserRepository userRepository,
         JwtTokenUtils jwtTokenUtils,
         PasswordEncoder passwordEncoder,
-        UserDetailsService userDetailsService
+        UserDetailsService userDetailsService,
+        AuthenticationFacade auth
     ) {
         this.userRepository = userRepository;
         this.jwtTokenUtils = jwtTokenUtils;
         this.passwordEncoder = passwordEncoder;
         this.userDetailsService = userDetailsService;
+        this.auth = auth;
 
         // 관리자 계정 생성
         if (!userExists("admin")) {
@@ -137,15 +143,12 @@ public class AuthServiceImpl implements AuthService {
     // Access Token & Refresh Token 발급
     @Override
     public void issueTokens(UserDetails userDetails, HttpServletResponse response) {
-        // Access Token 발급
+        // Access Token 발급, Access Token을 쿠키에 담아 응답에 추가
         String jwt = jwtTokenUtils.generateToken(userDetails);
-
-        // Refresth Token 발급
-        String refreshToken = jwtTokenUtils.generateRefreshToken(userDetails);
-
-        // Access Token을 쿠키에 담아 응답에 추가한다.
         makeCookie(TokenConstant.ACCESS_TOKEN, jwt, response);
-        // Refresh Token을 쿠키에 담아 응답에 추가한다.
+
+        // Refresth Token 발급, Refresh Token을 쿠키에 담아 응답에 추가
+        String refreshToken = jwtTokenUtils.generateRefreshToken(userDetails);
         makeCookie(TokenConstant.REFRESH_TOKEN, refreshToken, response);
     }
 
@@ -191,6 +194,41 @@ public class AuthServiceImpl implements AuthService {
         // 새로운 Refresh Token 발급 및 Cookie로 반환
         String newRefreshToken = jwtTokenUtils.generateRefreshToken(userDetails);
         makeCookie(TokenConstant.REFRESH_TOKEN, newRefreshToken, response);
+    }
+
+    // 로그아웃
+    @Override
+    public void logout(String refreshToken, HttpServletResponse response) {
+        // 인증 확인
+        User user = auth.getAuth();
+
+        // Redis에 저장된 Refresh Token 삭제
+        String redisKey = jwtTokenUtils.extractRediskey(refreshToken);
+
+        // Spring Security Context Clear
+        SecurityContextHolder.clearContext();
+
+        // 클라이언트의 HttpOnly 쿠키에 토큰들이 저장되어 있다면 삭제
+        deleteCookie(TokenConstant.ACCESS_TOKEN, response);
+        deleteCookie(TokenConstant.REFRESH_TOKEN, response);
+    }
+
+    // 회원탈퇴
+    @Override
+    public void deleteUser(String refreshToken, String password, HttpServletResponse response) {
+        // 인증 확인
+        User user = auth.getAuth();
+
+        // 비밀번호 확인
+        if (!passwordEncoder.matches(password, user.getPassword())) {
+            throw new IllegalArgumentException("Invalid password");
+        }
+
+        // 로그아웃 진행
+        logout(refreshToken, response);
+
+        // 사용자 데이터 삭제
+        userRepository.delete(user);
     }
 
     // 사용자 존재 유무 확인
