@@ -12,6 +12,7 @@ import io.jsonwebtoken.ExpiredJwtException;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -33,9 +34,11 @@ public class AuthServiceImpl implements AuthService {
     private final PasswordEncoder passwordEncoder;
     // 4. 사용자 정보를 가지고 오는 서비스
     private final UserDetailsService userDetailsService;
-    // 5. 사용자 인증 정보를 가지고 오는 Util 메서드
+    // 5. Refresh Token이 저장된 Redis
+    private final StringRedisTemplate redisTemplate;
+    // 6. 사용자 인증 정보를 가지고 오는 Util 메서드
     private final AuthenticationFacade auth;
-    // 6. 비밀번호 양식 확인(최소 8자리, 최소 1개의 대문자, 최소 1개의 특수문자를 필수 포함)
+    // 7. 비밀번호 양식 확인(최소 8자리, 최소 1개의 대문자, 최소 1개의 특수문자를 필수 포함)
     private static final String PASSWORD_REGEX
         = "^(?=.*[A-Z])(?=.*[!@#$%^&*()_+\\-=\\[\\]{};':\"\\\\|,.<>\\/?]).{8,}$";
 
@@ -44,12 +47,14 @@ public class AuthServiceImpl implements AuthService {
         JwtTokenUtils jwtTokenUtils,
         PasswordEncoder passwordEncoder,
         UserDetailsService userDetailsService,
+        StringRedisTemplate redisTemplate,
         AuthenticationFacade auth
     ) {
         this.userRepository = userRepository;
         this.jwtTokenUtils = jwtTokenUtils;
         this.passwordEncoder = passwordEncoder;
         this.userDetailsService = userDetailsService;
+        this.redisTemplate = redisTemplate;
         this.auth = auth;
 
         // 관리자 계정 생성
@@ -171,7 +176,7 @@ public class AuthServiceImpl implements AuthService {
 
         // Redis에 저장된 Refresh Token인지 확인
         String storedRefreshToken =
-            jwtTokenUtils.getRedisTemplate().opsForValue().get(redisKey);
+            redisTemplate.opsForValue().get(redisKey);
 
         if (storedRefreshToken == null || !storedRefreshToken.equals(refreshToken)) {
             // Redis에 없거나 일치하지 않는다면 이미 만료되었거나, 탈취된 토큰일 수 있다.

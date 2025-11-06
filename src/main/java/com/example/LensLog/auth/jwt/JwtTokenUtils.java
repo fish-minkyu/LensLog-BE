@@ -153,13 +153,8 @@ public class JwtTokenUtils {
 
     // Redis에서 Refresh Token을 삭제하는 메소드
     public void deleteRefreshToken(String redisKey) {
-        if (redisTemplate.hasKey(redisKey)) {
+        if (Boolean.TRUE.equals(redisTemplate.hasKey(redisKey))) {
             redisTemplate.delete(redisKey);
         }
-    }
-
-    // RedisTemplate 접근자 (AuthService에서 Redis에 저장된 Refresh Token 값을 비교하기 위함)
-    public StringRedisTemplate getRedisTemplate() {
-        return redisTemplate;
     }
 }
