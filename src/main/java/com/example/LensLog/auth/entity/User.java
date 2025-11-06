@@ -17,6 +17,12 @@ public class User {
     private String password;
 
     @Setter
+    @Column(nullable = false)
     private String email;
+
+    @Column(nullable = false)
+    @Builder.Default
+    private Boolean isVerified = false;
+
     private String authority;
 }

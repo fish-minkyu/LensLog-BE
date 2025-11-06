@@ -2,7 +2,6 @@ package com.example.LensLog.auth.service;
 
 import com.example.LensLog.auth.CustomUserDetails;
 import com.example.LensLog.auth.dto.UserDto;
-import com.example.LensLog.auth.entity.RoleEnum;
 import com.example.LensLog.auth.entity.User;
 import com.example.LensLog.auth.jwt.JwtTokenUtils;
 import com.example.LensLog.auth.repo.UserRepository;
@@ -11,6 +10,7 @@ import com.example.LensLog.constant.TokenConstant;
 import io.jsonwebtoken.ExpiredJwtException;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.http.HttpStatus;
@@ -25,6 +25,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 @Slf4j
 @Service
+@RequiredArgsConstructor
 public class AuthServiceImpl implements AuthService {
     // 1. 사용자 정보를 가져오기 위한 레포지토리
     private final UserRepository userRepository;
@@ -36,49 +37,13 @@ public class AuthServiceImpl implements AuthService {
     private final UserDetailsService userDetailsService;
     // 5. Refresh Token이 저장된 Redis
     private final StringRedisTemplate redisTemplate;
-    // 6. 사용자 인증 정보를 가지고 오는 Util 메서드
+    // 6.
+    private final EmailService emailService;
+    // 7. 사용자 인증 정보를 가지고 오는 Util 메서드
     private final AuthenticationFacade auth;
-    // 7. 비밀번호 양식 확인(최소 8자리, 최소 1개의 대문자, 최소 1개의 특수문자를 필수 포함)
+    // 8. 비밀번호 양식 확인(최소 8자리, 최소 1개의 대문자, 최소 1개의 특수문자를 필수 포함)
     private static final String PASSWORD_REGEX
         = "^(?=.*[A-Z])(?=.*[!@#$%^&*()_+\\-=\\[\\]{};':\"\\\\|,.<>\\/?]).{8,}$";
-
-    public AuthServiceImpl(
-        UserRepository userRepository,
-        JwtTokenUtils jwtTokenUtils,
-        PasswordEncoder passwordEncoder,
-        UserDetailsService userDetailsService,
-        StringRedisTemplate redisTemplate,
-        AuthenticationFacade auth
-    ) {
-        this.userRepository = userRepository;
-        this.jwtTokenUtils = jwtTokenUtils;
-        this.passwordEncoder = passwordEncoder;
-        this.userDetailsService = userDetailsService;
-        this.redisTemplate = redisTemplate;
-        this.auth = auth;
-
-        // 관리자 계정 생성
-        if (!userExists("admin")) {
-            signUp(UserDto.builder()
-                .username("admin")
-                .password("A123456!")
-                .email("admin@lenslong.io")
-                .authority(RoleEnum.ROLE_ADMIN.name())
-                .build()
-            );
-        }
-
-        // 일반 사용자 계정 생성
-        if (!userExists("user")) {
-            signUp(UserDto.builder()
-                .username("user")
-                .password("U123456!")
-                .email("user@lenslong.io")
-                .authority(RoleEnum.ROLE_USER.name())
-                .build()
-            );
-        }
-    }
 
     // 회원가입
     @Override
@@ -99,10 +64,27 @@ public class AuthServiceImpl implements AuthService {
             );
         }
 
+        // 이메일 인증 코드 검증
+        if (!emailService.verificationCode(dto.getEmail(), dto.getVefiryCode())) {
+            throw new ResponseStatusException(
+                HttpStatus.BAD_REQUEST,
+                "Invalid or expired verification code for email" + dto.getEmail()
+            );
+        }
+
+        // 이메일로 이미 가입된 또는 이미 인증된 사용자가 있는지 확인
+        if (userRepository.existsByEmail(dto.getEmail())) {
+            throw new ResponseStatusException(
+                HttpStatus.BAD_REQUEST,
+                "This email is already exist");
+        }
+
         try {
             User newUser = User.builder()
                 .username(dto.getUsername())
                 .password(passwordEncoder.encode(dto.getPassword())) // 비밀번호 암호화
+                .email(dto.getEmail())
+                .isVerified(Boolean.TRUE)
                 .authority(dto.getAuthority())
                 .build();
 
