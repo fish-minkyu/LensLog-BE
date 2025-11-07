@@ -1,5 +1,7 @@
 package com.example.LensLog.auth.service;
 
+import com.example.LensLog.auth.dto.EmailDto;
+import com.example.LensLog.auth.dto.PasswordDto;
 import com.example.LensLog.auth.dto.UserDto;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -22,6 +24,12 @@ public interface AuthService {
 
     // 사용자 존재 유무 email로 확인
     boolean existsByEmail(String email);
+
+    // 비밀번호 변경
+    void changePassword(PasswordDto dto);
+
+    // 사용자 username 찾기
+    String verifyAndGetUsername(EmailDto dto);
 
     // 로그아웃
     void logout(String refreshToken, HttpServletResponse response);

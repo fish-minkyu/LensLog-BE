@@ -1,6 +1,8 @@
 package com.example.LensLog.auth.service;
 
 import com.example.LensLog.auth.CustomUserDetails;
+import com.example.LensLog.auth.dto.EmailDto;
+import com.example.LensLog.auth.dto.PasswordDto;
 import com.example.LensLog.auth.dto.UserDto;
 import com.example.LensLog.auth.entity.User;
 import com.example.LensLog.auth.jwt.JwtTokenUtils;
@@ -65,7 +67,7 @@ public class AuthServiceImpl implements AuthService {
         }
 
         // 이메일 인증 코드 검증
-        if (!emailService.verificationCode(dto.getEmail(), dto.getVefiryCode())) {
+        if (!emailService.verificationCode(dto.getEmail(), dto.getVerifyCode())) {
             throw new ResponseStatusException(
                 HttpStatus.BAD_REQUEST,
                 "Invalid or expired verification code for email" + dto.getEmail()
@@ -181,6 +183,59 @@ public class AuthServiceImpl implements AuthService {
         // 새로운 Refresh Token 발급 및 Cookie로 반환
         String newRefreshToken = jwtTokenUtils.generateRefreshToken(userDetails);
         makeCookie(TokenConstant.REFRESH_TOKEN, newRefreshToken, response);
+    }
+
+    // 비밀번호 변경
+    @Override
+    public void changePassword(PasswordDto dto) {
+        // 인증된 사용자 확인
+        User user = auth.getAuth();
+
+        // 현재 비밀번호 확인
+        if (!passwordEncoder.matches(dto.getCurrentPassword(), user.getPassword())) {
+            throw new ResponseStatusException(
+                HttpStatus.UNAUTHORIZED,
+                "The password is wrong");
+        }
+
+        // 바꿀 비밀번호와 확인용 비밀번호가 일치하는지 확인
+        if (!passwordEncoder.matches(dto.getChangePassword1(), dto.getChangePassword2())) {
+            throw new ResponseStatusException(
+                HttpStatus.BAD_REQUEST,
+                "The password didn't match it"
+            );
+        }
+
+        //TODO 캡차 인증 validation 로직 추가
+
+        // 비밀번호 변경
+        User updatedUser = User.builder()
+            .username(user.getUsername())
+            .password(dto.getChangePassword1())
+            .email(user.getEmail())
+            .isVerified(Boolean.TRUE)
+            .authority("ROLE_USER")
+            .build();
+        userRepository.save(updatedUser);
+    }
+
+    // 사용자 username 찾기
+    @Override
+    public String verifyAndGetUsername(EmailDto dto) {
+        // 이메일 인증 코드 검증
+        if (!emailService.verificationCode(dto.getEmail(), dto.getVerifyCode())) {
+            throw new ResponseStatusException(
+                HttpStatus.BAD_REQUEST,
+                "Invalid or expired verification code for email" + dto.getEmail()
+            );
+        }
+
+        User targetUser = userRepository.findByEmail(dto.getEmail())
+            .orElseThrow(() -> new ResponseStatusException(
+                HttpStatus.NOT_FOUND
+                , "The user doesn't exist."));
+
+        return targetUser.getUsername();
     }
 
     // 로그아웃

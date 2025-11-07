@@ -1,5 +1,7 @@
 package com.example.LensLog.auth.controller;
 
+import com.example.LensLog.auth.dto.EmailDto;
+import com.example.LensLog.auth.dto.PasswordDto;
 import com.example.LensLog.auth.dto.UserDto;
 import com.example.LensLog.auth.service.AuthService;
 import com.example.LensLog.constant.TokenConstant;
@@ -29,7 +31,20 @@ public class AuthController {
         HttpServletResponse response
     ) {
         authService.login(dto, response);
-        return ResponseEntity.ok("Login Success");
+        return ResponseEntity.ok("Login Success.");
+    }
+
+    // 비밀번호 변경
+    @PutMapping("/change/password")
+    public ResponseEntity<String> changePassword(@RequestBody PasswordDto dto) {
+
+        return ResponseEntity.ok("Changing password is success.");
+    }
+
+    // 사용자 username 찾기(인증 후 반환)
+    @PostMapping("/find/username")
+    public ResponseEntity<String> verifyCodeAndGetUsername(@RequestBody EmailDto dto) {
+        return ResponseEntity.ok(authService.verifyAndGetUsername(dto));
     }
 
     // 로그아웃
@@ -39,7 +54,7 @@ public class AuthController {
         HttpServletResponse response
     ) {
         authService.logout(refreshToken, response);
-        return null;
+        return ResponseEntity.ok("Logout is success.");
     }
 
     // 회원탈퇴
@@ -60,6 +75,6 @@ public class AuthController {
         HttpServletResponse response
     ) {
         authService.reIssueTokens(refreshToken, response);
-        return ResponseEntity.ok("Tokens re-issue success");
+        return ResponseEntity.ok("Tokens re-issue success.");
     }
 }

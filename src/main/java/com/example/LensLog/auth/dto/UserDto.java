@@ -12,7 +12,7 @@ public class UserDto {
     private String username;
     private String password;
     private String email;
-    private String vefiryCode;
+    private String verifyCode;
     private String authority;
 
     public static UserDto fromEntity(User entity) {
