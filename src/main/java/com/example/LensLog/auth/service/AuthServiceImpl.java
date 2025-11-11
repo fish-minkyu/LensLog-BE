@@ -1,7 +1,6 @@
 package com.example.LensLog.auth.service;
 
 import com.example.LensLog.auth.CustomUserDetails;
-import com.example.LensLog.auth.dto.EmailDto;
 import com.example.LensLog.auth.dto.PasswordDto;
 import com.example.LensLog.auth.dto.UserDto;
 import com.example.LensLog.auth.entity.User;
@@ -17,8 +16,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -35,8 +32,6 @@ public class AuthServiceImpl implements AuthService {
     private final JwtTokenUtils jwtTokenUtils;
     // 3. 사용자가 제공한 아이디 비밀번호를 비교하기 위한 클래스
     private final PasswordEncoder passwordEncoder;
-    // 4. 사용자 정보를 가지고 오는 서비스
-    private final UserDetailsService userDetailsService;
     // 5. Refresh Token이 저장된 Redis
     private final StringRedisTemplate redisTemplate;
     // 6.
@@ -50,11 +45,11 @@ public class AuthServiceImpl implements AuthService {
     // 회원가입
     @Override
     public UserDto signUp(UserDto dto) {
-        // 사용자 이름 중복 검사
-        if (this.userExists(dto.getUsername())) {
+        // 이메일로 이미 가입된 또는 이미 인증된 사용자가 있는지 확인
+        if (userRepository.existsByEmail(dto.getEmail())) {
             throw new ResponseStatusException(
                 HttpStatus.BAD_REQUEST,
-                "This username already exist");
+                "This email is already exist");
         }
 
         // 비밀번호 유효성 검사
@@ -74,19 +69,16 @@ public class AuthServiceImpl implements AuthService {
             );
         }
 
-        // 이메일로 이미 가입된 또는 이미 인증된 사용자가 있는지 확인
-        if (userRepository.existsByEmail(dto.getEmail())) {
-            throw new ResponseStatusException(
-                HttpStatus.BAD_REQUEST,
-                "This email is already exist");
-        }
+
 
         try {
             User newUser = User.builder()
-                .username(dto.getUsername())
-                .password(passwordEncoder.encode(dto.getPassword())) // 비밀번호 암호화
                 .email(dto.getEmail())
+                .password(passwordEncoder.encode(dto.getPassword())) // 비밀번호 암호화
+                .name(dto.getName())
+                .birthDate(dto.getBirthDate())
                 .isVerified(Boolean.TRUE)
+                .provider(dto.getProvider())
                 .authority(dto.getAuthority())
                 .build();
 
@@ -106,11 +98,11 @@ public class AuthServiceImpl implements AuthService {
     // 로그인
     @Override
     public void login(UserDto dto, HttpServletResponse response) {
-        UserDetails userDetails;
+        CustomUserDetails customUserDetails;
 
         try {
             // 1. 사용자 정보 조회
-            userDetails = userDetailsService.loadUserByUsername(dto.getUsername());
+            customUserDetails = loadUserByEmail(dto.getEmail());
         } catch (UsernameNotFoundException e) {
             throw new ResponseStatusException(
                 HttpStatus.UNAUTHORIZED,
@@ -119,36 +111,36 @@ public class AuthServiceImpl implements AuthService {
 
         // 2. 비밀번호 대조
         // => 날 것의 비밀번호와 암호화된 비밀번호를 비교한다.
-        if (!passwordEncoder.matches(dto.getPassword(), userDetails.getPassword())) {
+        if (!passwordEncoder.matches(dto.getPassword(), customUserDetails.getPassword())) {
             throw new ResponseStatusException(
                 HttpStatus.UNAUTHORIZED,
                 "Invalid username or password");
         }
 
         // 3. 토큰 발급(Cookie에 추가)
-        issueTokens(userDetails, response);
+        issueTokens(customUserDetails, response);
     }
 
     // Access Token & Refresh Token 발급
     @Override
-    public void issueTokens(UserDetails userDetails, HttpServletResponse response) {
+    public void issueTokens(CustomUserDetails customUserDetails, HttpServletResponse response) {
         // Access Token 발급, Access Token을 쿠키에 담아 응답에 추가
-        String jwt = jwtTokenUtils.generateToken(userDetails);
+        String jwt = jwtTokenUtils.generateToken(customUserDetails);
         makeCookie(TokenConstant.ACCESS_TOKEN, jwt, response);
 
         // Refresth Token 발급, Refresh Token을 쿠키에 담아 응답에 추가
-        String refreshToken = jwtTokenUtils.generateRefreshToken(userDetails);
+        String refreshToken = jwtTokenUtils.generateRefreshToken(customUserDetails);
         makeCookie(TokenConstant.REFRESH_TOKEN, refreshToken, response);
     }
 
     // Access Token과 Refresh Token을 재발급
     @Override
     public void reIssueTokens(String refreshToken, HttpServletResponse response) {
-        String username;
+        String email;
         String redisKey;
 
         try {
-            username = jwtTokenUtils.extractUsername(refreshToken);
+            email = jwtTokenUtils.extractEmail(refreshToken);
             redisKey = jwtTokenUtils.extractRediskey(refreshToken);
         } catch (ExpiredJwtException e) {
             // Refresh Token 자체도 만료된 경우
@@ -168,8 +160,8 @@ public class AuthServiceImpl implements AuthService {
         }
 
         // Refresh Token의 사용자 정보와 UserDetails의 사용자 정보 일치 확인
-        UserDetails userDetails = userDetailsService.loadUserByUsername(username);
-        if (!jwtTokenUtils.validateToken(refreshToken, userDetails)) {
+        CustomUserDetails customUserDetails = loadUserByEmail(email);
+        if (!jwtTokenUtils.validateToken(refreshToken, customUserDetails)) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Refresh Token validation failed for user.");
         }
 
@@ -177,11 +169,11 @@ public class AuthServiceImpl implements AuthService {
         jwtTokenUtils.deleteRefreshToken(redisKey);
 
         // 새로운 Access Token 발급 및 Cookie로 반환
-        String newAccessToken = jwtTokenUtils.generateToken(userDetails);
+        String newAccessToken = jwtTokenUtils.generateToken(customUserDetails);
         makeCookie(TokenConstant.ACCESS_TOKEN, newAccessToken, response);
 
         // 새로운 Refresh Token 발급 및 Cookie로 반환
-        String newRefreshToken = jwtTokenUtils.generateRefreshToken(userDetails);
+        String newRefreshToken = jwtTokenUtils.generateRefreshToken(customUserDetails);
         makeCookie(TokenConstant.REFRESH_TOKEN, newRefreshToken, response);
     }
 
@@ -210,33 +202,16 @@ public class AuthServiceImpl implements AuthService {
 
         // 비밀번호 변경
         User updatedUser = User.builder()
-            .username(user.getUsername())
-            .password(dto.getChangePassword1())
             .email(user.getEmail())
+            .password(dto.getChangePassword1())
             .isVerified(Boolean.TRUE)
+            .provider(user.getProvider())
             .authority("ROLE_USER")
             .build();
         userRepository.save(updatedUser);
     }
 
-    // 사용자 username 찾기
-    @Override
-    public String verifyAndGetUsername(EmailDto dto) {
-        // 이메일 인증 코드 검증
-        if (!emailService.verificationCode(dto.getEmail(), dto.getVerifyCode())) {
-            throw new ResponseStatusException(
-                HttpStatus.BAD_REQUEST,
-                "Invalid or expired verification code for email" + dto.getEmail()
-            );
-        }
-
-        User targetUser = userRepository.findByEmail(dto.getEmail())
-            .orElseThrow(() -> new ResponseStatusException(
-                HttpStatus.NOT_FOUND
-                , "The user doesn't exist."));
-
-        return targetUser.getUsername();
-    }
+    // 사용자 email 찾기
 
     // 로그아웃
     @Override
@@ -273,12 +248,6 @@ public class AuthServiceImpl implements AuthService {
         userRepository.delete(user);
     }
 
-    // 사용자 존재 유무 확인
-    @Override
-    public boolean userExists(String username) {
-        return userRepository.existsByUsername(username);
-    }
-
     // 사용자 존재 유무 email로 확인
     @Override
     public boolean existsByEmail(String email) {
@@ -304,5 +273,17 @@ public class AuthServiceImpl implements AuthService {
         cookie.setPath("/");
 
         response.addCookie(cookie);
+    }
+
+    @Override
+    public CustomUserDetails loadUserByEmail(String email) {
+        User user = userRepository.findByEmail(email)
+            .orElseThrow(() -> new UsernameNotFoundException("User not found with email" + email));
+
+        return CustomUserDetails.builder()
+            .email(user.getEmail())
+            .password(user.getPassword())
+            .authority(user.getAuthority())
+            .build();
     }
 }

@@ -4,6 +4,7 @@ import com.example.LensLog.auth.jwt.JwtTokenFilter;
 import com.example.LensLog.auth.jwt.JwtTokenUtils;
 import com.example.LensLog.auth.oatuh.OAuth2SuccessHandler;
 import com.example.LensLog.auth.oatuh.OAuth2UserServiceImpl;
+import com.example.LensLog.auth.service.AuthService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -19,7 +20,8 @@ import org.springframework.security.web.access.intercept.AuthorizationFilter;
 @RequiredArgsConstructor
 public class WebSecurityConfig {
     private final JwtTokenUtils jwtTokenUtils;
-    private final UserDetailsService manager;
+//    private final UserDetailsService manager;
+    private final AuthService authService;
     private final OAuth2SuccessHandler oAuth2SuccessHandler;
     private final OAuth2UserServiceImpl oAuth2UserService;
 
@@ -34,33 +36,40 @@ public class WebSecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 // 전부 허가
                 .requestMatchers(HttpMethod.GET,
+                    // photo API
                     "/api/photo/getList",
                     "/api/photo/getOne/{photoId}"
                 )
                 .permitAll()
                 // 익명 사용자 권한
                 .requestMatchers(HttpMethod.POST,
+                    // auth API
                     "/api/auth/join",
                     "/api/auth/login"
                     )
                 .anonymous()
                 // 로그인 권한
                 .requestMatchers(HttpMethod.GET,
+                    // photo API
                     "/api/photo/download/{photoId}",
+                    // like API
                     "/api/like/good",
                     "/api/like/delete"
                 )
                 .authenticated()
                 .requestMatchers(HttpMethod.POST,
+                    // auth API
                     "/api/auth/refresh"
                     )
                 .authenticated()
                 // 관리자 권한
                 .requestMatchers(HttpMethod.POST,
+                    // photo API
                     "/api/photo/upload"
                     )
                 .hasRole("ADMIN")
                 .requestMatchers(HttpMethod.DELETE,
+                    // photo API
                     "/api/photo/delete/{photoId}"
                     )
                 .hasRole("ADMIN")
@@ -84,7 +93,7 @@ public class WebSecurityConfig {
             .addFilterBefore(
                 new JwtTokenFilter(
                     jwtTokenUtils,
-                    manager
+                    authService
                 ),
                 AuthorizationFilter.class
             );

@@ -1,5 +1,6 @@
 package com.example.LensLog.auth.jwt;
 
+import com.example.LensLog.auth.CustomUserDetails;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtParser;
 import io.jsonwebtoken.Jwts;
@@ -46,7 +47,7 @@ public class JwtTokenUtils {
 
     // UserDetails를 받아서 JWT로 변환하는 메서드
     // UserDetails를 받아서 사용하는 이유는, Spring Security에서 UserDetails를 사용하고 있기 때문이다.
-    public String generateToken(UserDetails userDetails) {
+    public String generateToken(CustomUserDetails customUserDetails) {
         // JWT에 담고싶은 정보를 Claims로 만든다.
         // sub: 누구인지
         // iat: 언제 발급 되었는지
@@ -59,7 +60,7 @@ public class JwtTokenUtils {
             // sub: 누구인지
             // UserDetails의 규약 자체를 따라서 만들고 있으므로
             // getUsername은 UserDetails에 무조건 있다는 것을 기대할 수 있다.
-            .setSubject(userDetails.getUsername())
+            .setSubject(customUserDetails.getEmail())
 
             // setIssuedAt
             // : 자바의 Date 클래스를 받는다.
@@ -129,8 +130,8 @@ public class JwtTokenUtils {
             .getBody();
     }
 
-    // 토큰에서 사용자 이름을 추출하는 메소드
-    public String extractUsername(String token) {
+    // 토큰에서 사용자 메일을 추출하는 메소드
+    public String extractEmail(String token) {
         return parseClaims(token).getSubject();
     }
 
@@ -146,9 +147,9 @@ public class JwtTokenUtils {
     }
 
     // 특정 사용자 정보와 토큰의 유효성 (만료 여부, 사용자 일치)을 함께 검증하는 메소드
-    public boolean validateToken(String token, UserDetails userDetails) {
-        final String username = extractUsername(token);
-        return (username.equals(userDetails.getUsername()) && !isTokenExpired(token));
+    public boolean validateToken(String token, CustomUserDetails customUserDetails) {
+        final String email = extractEmail(token);
+        return (email.equals(customUserDetails.getEmail()) && !isTokenExpired(token));
     }
 
     // Redis에서 Refresh Token을 삭제하는 메소드

@@ -44,7 +44,9 @@ public class AuthController {
     // 사용자 username 찾기(인증 후 반환)
     @PostMapping("/find/username")
     public ResponseEntity<String> verifyCodeAndGetUsername(@RequestBody EmailDto dto) {
-        return ResponseEntity.ok(authService.verifyAndGetUsername(dto));
+//        return ResponseEntity.ok(authService.verifyAndGetUsername(dto));
+
+        return null;
     }
 
     // 로그아웃

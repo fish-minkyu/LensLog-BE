@@ -1,20 +1,19 @@
 package com.example.LensLog.auth.service;
 
-import com.example.LensLog.auth.dto.EmailDto;
+import com.example.LensLog.auth.CustomUserDetails;
 import com.example.LensLog.auth.dto.PasswordDto;
 import com.example.LensLog.auth.dto.UserDto;
 import jakarta.servlet.http.HttpServletResponse;
-import org.springframework.security.core.userdetails.UserDetails;
 
 public interface AuthService {
     // 회원가입
     UserDto signUp(UserDto dto);
 
-    // Access Token & Refresh Token 발급
-    void issueTokens(UserDetails userDetails, HttpServletResponse response);
+    // 사용자 정보 조회
+    CustomUserDetails loadUserByEmail(String email);
 
-    // 사용자 존재 유무 확인
-    boolean userExists(String username);
+    // Access Token & Refresh Token 발급
+    void issueTokens(CustomUserDetails customUserDetails, HttpServletResponse response);
 
     // 로그인
     void login(UserDto dto, HttpServletResponse response);
@@ -27,9 +26,6 @@ public interface AuthService {
 
     // 비밀번호 변경
     void changePassword(PasswordDto dto);
-
-    // 사용자 username 찾기
-    String verifyAndGetUsername(EmailDto dto);
 
     // 로그아웃
     void logout(String refreshToken, HttpServletResponse response);
