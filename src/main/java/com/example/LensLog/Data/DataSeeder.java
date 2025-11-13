@@ -5,6 +5,7 @@ import com.example.LensLog.auth.repo.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -15,8 +16,10 @@ import java.util.Date;
 @Component
 @RequiredArgsConstructor
 public class DataSeeder implements CommandLineRunner {
+    private final PasswordEncoder passwordEncoder;
     private final UserRepository userRepository;
     private static final String ADMIN_EMAIL = "e951219@naver.com";
+    private static final String PASSWORD = "lensLog123!";
 
     @Transactional
     @Override
@@ -31,7 +34,7 @@ public class DataSeeder implements CommandLineRunner {
         try {
             User admin = User.builder()
                 .email(ADMIN_EMAIL)
-                .password("lensLog123!")
+                .password(passwordEncoder.encode(PASSWORD))
                 .name("관리자")
                 .birthDate(LocalDate.now())
                 .isVerified(true)

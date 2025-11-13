@@ -58,8 +58,6 @@ public class JwtTokenUtils {
         Instant now = Instant.now();
         Claims jwtClaims = Jwts.claims() // 일종의 Builder처럼 동작한다.
             // sub: 누구인지
-            // UserDetails의 규약 자체를 따라서 만들고 있으므로
-            // getUsername은 UserDetails에 무조건 있다는 것을 기대할 수 있다.
             .setSubject(customUserDetails.getEmail())
 
             // setIssuedAt
@@ -84,7 +82,7 @@ public class JwtTokenUtils {
     }
 
     // Refresh Token을 발급하는 메서드
-    public String generateRefreshToken(UserDetails userDetails) {
+    public String generateRefreshToken(CustomUserDetails customUserDetails) {
         ValueOperations<String, String> operations = redisTemplate.opsForValue();
 
         // 현재 호출되었을 때 epoch time
@@ -94,7 +92,7 @@ public class JwtTokenUtils {
 
         Claims jwtClaims = Jwts.claims()
             .setId(refreshTokenId)
-            .setSubject(userDetails.getUsername())
+            .setSubject(customUserDetails.getEmail())
             .setIssuedAt(Date.from(now))
             .setExpiration(Date.from(now.plusSeconds(60 * 60 * 24 * 7))); // 일주일
 

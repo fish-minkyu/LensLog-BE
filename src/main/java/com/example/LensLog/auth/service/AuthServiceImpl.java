@@ -69,8 +69,6 @@ public class AuthServiceImpl implements AuthService {
             );
         }
 
-
-
         try {
             User newUser = User.builder()
                 .email(dto.getEmail())
