@@ -3,11 +3,13 @@ package com.example.LensLog.auth.oatuh;
 import com.example.LensLog.auth.CustomUserDetails;
 import com.example.LensLog.auth.dto.UserDto;
 import com.example.LensLog.auth.service.AuthService;
+import com.example.LensLog.constant.LoginTypeConstant;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.core.user.OAuth2User;
@@ -15,6 +17,7 @@ import org.springframework.security.web.authentication.SimpleUrlAuthenticationSu
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
+import java.time.LocalDate;
 
 // OAuth2UserServiceImpl이 성공적으로 OAuth2 과정을 마무리 했을 때,
 // 넘겨받은 사용자 정보를 바탕으로 jwt를 생성하고 클라이언트에 전달
@@ -27,7 +30,7 @@ public class OAuth2SuccessHandler
 
     // JWT 토큰 발급을 위해 AuthService
     private final AuthService authService;
-    //
+    // 비밀번호 암호화 객체
     private final PasswordEncoder passwordEncoder;
 
     @Override
@@ -40,21 +43,33 @@ public class OAuth2SuccessHandler
         OAuth2User oAuth2User
             = (OAuth2User) authentication.getPrincipal();
 
-        // 넘겨받은 정보를 바탕으로 사용자 정보를 준비한다.
+        // 해당 email이 이미 가입이 되어있는지 확인하기 위해 꺼낸다.
         String email = oAuth2User.getAttribute("email");
-        String provider = oAuth2User.getAttribute("provider");
-//        String username = String.format("{%s}%s", provider, email);
-        String providerId = oAuth2User.getAttribute("id").toString();
 
         // 처음으로 이 소셜 로그인으로 로그인을 시도했다.
         if (!authService.existsByEmail(email)) {
+            // 넘겨받은 정보를 바탕으로 사용자 정보를 준비한다.
+            String provider = oAuth2User.getAttribute("provider");
+            String providerId = oAuth2User.getAttribute("id").toString();
+            String name = oAuth2User.getAttribute("name");
+            String birthYear = oAuth2User.getAttribute("birthyear");
+            String birthday = oAuth2User.getAttribute("birthday");
+
+            if (LoginTypeConstant.KAKAO.equals(provider)) {
+                assert birthday != null;
+                birthday = birthday.substring(0, 2) + "-" + birthday.substring(2);
+            }
+
+            LocalDate birthDate = LocalDate.parse(birthYear + "-" + birthday);
+
             // 새 계정을 만든다.
             authService.signUp(UserDto.builder()
                 .email(email)
                 .password(passwordEncoder.encode(providerId))
+                .name(name)
+                .birthDate(birthDate)
                 .provider(provider)
-
-                //TODO 사용자 이름과 생년 월일도 추가 필요
+                .authority("ROLE_USER")
                 .build());
         }
 
@@ -73,8 +88,6 @@ public class OAuth2SuccessHandler
     // Redirect할 기본 URL 설정
     @Override
     protected String determineTargetUrl(HttpServletRequest request, HttpServletResponse response) {
-        //TODO application.yml에서 따로 설정해주기
-        // React 페이지 url을 반환해야 한다.
-        return "http://localhost:8080/oauth2/redirect";
+        return "http://localhost:5173/";
     }
 }

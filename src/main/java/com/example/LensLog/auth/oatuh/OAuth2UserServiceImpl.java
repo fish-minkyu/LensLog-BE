@@ -1,6 +1,7 @@
 package com.example.LensLog.auth.oatuh;
 
 import com.example.LensLog.auth.entity.RoleEnum;
+import com.example.LensLog.constant.LoginTypeConstant;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
@@ -21,8 +22,6 @@ import java.util.Map;
 @Slf4j
 @Service
 public class OAuth2UserServiceImpl extends DefaultOAuth2UserService {
-    private final String NAVER = "naver";
-    private final String KAKAO = "kakao";
 
     // 사용자 정보 받아오기
     @Override
@@ -39,32 +38,29 @@ public class OAuth2UserServiceImpl extends DefaultOAuth2UserService {
         String nameAttribute = "";
 
         // Naver 아이디로 로그인
-        if (NAVER.equals(registrationId)) {
+        if (LoginTypeConstant.NAVER.equals(registrationId)) {
             // Naver에서 받아온 정보이다.
-
             // Naver에서 반환한 JSON에서 response를 회수
             Map<String, Object> responseMap = oAuth2User.getAttribute("response");
 
-            attributes.put("provider", NAVER);
+            attributes.put("provider", LoginTypeConstant.NAVER);
             attributes.put("id", responseMap.get("id"));
             attributes.put("email", responseMap.get("email"));
-            attributes.put("nickname", responseMap.get("nickname"));
             attributes.put("name", responseMap.get("name"));
-            attributes.put("profileImg", responseMap.get("profile_image"));
-            attributes.put("phone", responseMap.get("phone"));
+            attributes.put("birthyear", responseMap.get("birthyear"));
+            attributes.put("birthday", responseMap.get("birthday"));
             nameAttribute = "email";
         }
 
         // Kakao 아이디로 로그인
-        if (KAKAO.equals(registrationId)) {
+        if (LoginTypeConstant.KAKAO.equals(registrationId)) {
             Map<String, Object> kakaoAccount = oAuth2User.getAttribute("kakao_account");
-            Map<String, Object> kakaoProfile = (Map<String, Object>) kakaoAccount.get("profile");
-
-            attributes.put("provider", "kakao");
-            attributes.put("id", oAuth2User.getAttribute("id"));
+            attributes.put("provider", LoginTypeConstant.KAKAO);
+            attributes.put("id", kakaoAccount.get("id"));
             attributes.put("email", kakaoAccount.get("email"));
-            attributes.put("nickname", kakaoProfile.get("nickname"));
-            attributes.put("profileImg", kakaoProfile.get("profile_image_url"));
+            attributes.put("name", kakaoAccount.get("name"));
+            attributes.put("birthyear", kakaoAccount.get("birthyear"));
+            attributes.put("birthday", kakaoAccount.get("birthday"));
             nameAttribute = "email";
         }
         log.info(attributes.toString());

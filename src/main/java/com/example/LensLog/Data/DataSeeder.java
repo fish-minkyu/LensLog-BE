@@ -2,6 +2,7 @@ package com.example.LensLog.Data;
 
 import com.example.LensLog.auth.entity.User;
 import com.example.LensLog.auth.repo.UserRepository;
+import com.example.LensLog.constant.LoginTypeConstant;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;
@@ -38,6 +39,7 @@ public class DataSeeder implements CommandLineRunner {
                 .name("관리자")
                 .birthDate(LocalDate.now())
                 .isVerified(true)
+                .provider(LoginTypeConstant.LOCAL)
                 .authority("ROLE_ADMIN")
                 .build();
 
