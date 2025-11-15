@@ -24,6 +24,7 @@ import java.util.Map;
 public class OAuth2UserServiceImpl extends DefaultOAuth2UserService {
 
     // 사용자 정보 받아오기
+    @SuppressWarnings("unchecked")
     @Override
     public OAuth2User loadUser(OAuth2UserRequest userRequest)
         throws OAuth2AuthenticationException {
@@ -37,6 +38,19 @@ public class OAuth2UserServiceImpl extends DefaultOAuth2UserService {
         Map<String, Object> attributes = new HashMap<>();
         String nameAttribute = "";
 
+        // Kakao 아이디로 로그인
+        if (LoginTypeConstant.KAKAO.equals(registrationId)) {
+            Map<String, Object> kakaoAccount = oAuth2User.getAttribute("kakao_account");
+            Map<String, Object> kakaoProfile = (Map<String, Object>) kakaoAccount.get("profile");
+
+            attributes.put("provider", LoginTypeConstant.KAKAO);
+            attributes.put("id", kakaoAccount.get("id"));
+            attributes.put("nickname", kakaoProfile.get("nickname"));
+            attributes.put("name", kakaoAccount.get("name"));
+            attributes.put("email", kakaoAccount.get("email"));
+            nameAttribute = "email";
+        }
+
         // Naver 아이디로 로그인
         if (LoginTypeConstant.NAVER.equals(registrationId)) {
             // Naver에서 받아온 정보이다.
@@ -45,24 +59,26 @@ public class OAuth2UserServiceImpl extends DefaultOAuth2UserService {
 
             attributes.put("provider", LoginTypeConstant.NAVER);
             attributes.put("id", responseMap.get("id"));
-            attributes.put("email", responseMap.get("email"));
+            attributes.put("nickname", responseMap.get("nickname"));
             attributes.put("name", responseMap.get("name"));
-            attributes.put("birthyear", responseMap.get("birthyear"));
-            attributes.put("birthday", responseMap.get("birthday"));
+            attributes.put("email", responseMap.get("email"));
             nameAttribute = "email";
         }
 
-        // Kakao 아이디로 로그인
-        if (LoginTypeConstant.KAKAO.equals(registrationId)) {
-            Map<String, Object> kakaoAccount = oAuth2User.getAttribute("kakao_account");
-            attributes.put("provider", LoginTypeConstant.KAKAO);
-            attributes.put("id", kakaoAccount.get("id"));
-            attributes.put("email", kakaoAccount.get("email"));
-            attributes.put("name", kakaoAccount.get("name"));
-            attributes.put("birthyear", kakaoAccount.get("birthyear"));
-            attributes.put("birthday", kakaoAccount.get("birthday"));
+        // Google 아이디로 로그인
+        if (LoginTypeConstant.GOOGLE.equals(registrationId)) {
+            // Google에서 받아온 정보이다.
+            String email = oAuth2User.getAttribute("email");
+            String nickname = email.split("@")[0];
+
+            attributes.put("provider", LoginTypeConstant.GOOGLE);
+            attributes.put("id", oAuth2User.getAttribute("sub"));
+            attributes.put("nickname", nickname);
+            attributes.put("name", oAuth2User.getAttribute("name"));
+            attributes.put("email", email);
             nameAttribute = "email";
         }
+
         log.info(attributes.toString());
         // 성공 시 이 객체를 반환하면 -> OAuth2SuccessHandler가 실행된다.
         return new DefaultOAuth2User(

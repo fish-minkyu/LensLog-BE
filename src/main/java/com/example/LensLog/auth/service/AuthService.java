@@ -1,19 +1,16 @@
 package com.example.LensLog.auth.service;
 
-import com.example.LensLog.auth.CustomUserDetails;
 import com.example.LensLog.auth.dto.PasswordDto;
 import com.example.LensLog.auth.dto.UserDto;
 import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.security.core.userdetails.UserDetails;
 
 public interface AuthService {
     // 회원가입
     UserDto signUp(UserDto dto);
 
-    // 사용자 정보 조회
-    CustomUserDetails loadUserByEmail(String email);
-
     // Access Token & Refresh Token 발급
-    void issueTokens(CustomUserDetails customUserDetails, HttpServletResponse response);
+    void issueTokens(UserDetails userDetails, HttpServletResponse response);
 
     // 로그인
     void login(UserDto dto, HttpServletResponse response);

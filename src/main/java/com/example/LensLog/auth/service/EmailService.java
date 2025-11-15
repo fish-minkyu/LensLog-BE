@@ -1,5 +1,6 @@
 package com.example.LensLog.auth.service;
 
+import com.example.LensLog.constant.LoginTypeConstant;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
@@ -78,7 +79,12 @@ public class EmailService {
     }
 
     // 인증 코드 유효성 검사
-    public boolean verificationCode(String toEmail, String verifyCode) {
+    public boolean verificationCode(String provider, String toEmail, String verifyCode) {
+        // 소셜 로그인으로 가입한 계정일 경우, 이메일 인증을 할 필요가 없다.
+        if (!LoginTypeConstant.LOCAL.equals(provider)) {
+            return true;
+        }
+
         String redisKey = EMAIL_PREFIX + toEmail;
         if (Boolean.FALSE.equals(redisTemplate.hasKey(redisKey))) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND);

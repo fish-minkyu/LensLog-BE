@@ -1,7 +1,5 @@
 package com.example.LensLog.auth.jwt;
 
-import com.example.LensLog.auth.CustomUserDetails;
-import com.example.LensLog.auth.service.AuthService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -14,6 +12,8 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
@@ -25,15 +25,15 @@ import java.io.IOException;
 @Slf4j
 public class JwtTokenFilter extends OncePerRequestFilter {
     private final JwtTokenUtils jwtTokenUtils;
-    private final AuthService authService;
-
+    // 사용자 정보를 찾기위한 UserDetailsService 또는 UserDetailsManager
+    private final UserDetailsService manager;
 
     public JwtTokenFilter(
         JwtTokenUtils jwtTokenUtils,
-        AuthService authService
+        UserDetailsService manager
     ) {
         this.jwtTokenUtils = jwtTokenUtils;
-        this.authService = authService;
+        this.manager = manager;
     }
 
     @Override
@@ -55,12 +55,12 @@ public class JwtTokenFilter extends OncePerRequestFilter {
                 // 4. 유효하다면 해당 토큰을 바탕으로 사용자 정보를 SecurityContext에 등록
                 SecurityContext context = SecurityContextHolder.createEmptyContext();
                 // 사용자 정보 회수
-                String email = jwtTokenUtils
+                String username = jwtTokenUtils
                     .parseClaims(token)
                     .getSubject();
 
                 // getAuthorities 메소드의 결과에 따라서 사용자의 권한을 확인
-                CustomUserDetails userDetails = authService.loadUserByEmail(email);
+                UserDetails userDetails = manager.loadUserByUsername(username);
                 for(GrantedAuthority authority : userDetails.getAuthorities()) {
                     log.info("authority: {}", authority.getAuthority());
                 }

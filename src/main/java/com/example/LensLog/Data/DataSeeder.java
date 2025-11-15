@@ -10,8 +10,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDate;
-import java.util.Date;
 
 @Slf4j
 @Component
@@ -34,10 +32,10 @@ public class DataSeeder implements CommandLineRunner {
 
         try {
             User admin = User.builder()
-                .email(ADMIN_EMAIL)
+                .username("e951219")
                 .password(passwordEncoder.encode(PASSWORD))
                 .name("관리자")
-                .birthDate(LocalDate.now())
+                .email(ADMIN_EMAIL)
                 .isVerified(true)
                 .provider(LoginTypeConstant.LOCAL)
                 .authority("ROLE_ADMIN")

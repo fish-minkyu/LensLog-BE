@@ -1,10 +1,8 @@
 package com.example.LensLog.auth.entity;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.persistence.*;
 import lombok.*;
 
-import java.time.LocalDate;
 
 @Entity
 @Getter
@@ -16,16 +14,15 @@ public class User {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long userId;
 
-    @Setter
-    @Column(nullable = false)
-    private String email;
+    private String username;
     private String password;
 
     @Column(nullable = false)
     private String name;
-    @Column(nullable = false, columnDefinition = "DATE")
-    @JsonFormat(pattern = "yyyy-MM-dd")
-    private LocalDate birthDate;
+    @Setter
+    @Column(nullable = false)
+    private String email;
+
 
     @Column(nullable = false)
     @Builder.Default

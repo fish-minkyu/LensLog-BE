@@ -35,7 +35,7 @@ public class AuthenticationFacade {
             throw new IllegalStateException("인증 주체의 타입이 CustomUserDetails가 아닙니다.");
         }
 
-        return userRepository.findByEmail(customUserDetails.getEmail())
+        return userRepository.findByUsername(customUserDetails.getUsername())
             .orElseThrow(() -> new IllegalStateException("There is no user."));
     }
 }

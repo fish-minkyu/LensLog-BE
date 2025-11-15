@@ -4,7 +4,6 @@ import com.example.LensLog.auth.jwt.JwtTokenFilter;
 import com.example.LensLog.auth.jwt.JwtTokenUtils;
 import com.example.LensLog.auth.oatuh.OAuth2SuccessHandler;
 import com.example.LensLog.auth.oatuh.OAuth2UserServiceImpl;
-import com.example.LensLog.auth.service.AuthService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -20,8 +19,7 @@ import org.springframework.security.web.access.intercept.AuthorizationFilter;
 @RequiredArgsConstructor
 public class WebSecurityConfig {
     private final JwtTokenUtils jwtTokenUtils;
-//    private final UserDetailsService manager;
-    private final AuthService authService;
+    private final UserDetailsService manager;
     private final OAuth2SuccessHandler oAuth2SuccessHandler;
     private final OAuth2UserServiceImpl oAuth2UserService;
 
@@ -93,7 +91,7 @@ public class WebSecurityConfig {
             .addFilterBefore(
                 new JwtTokenFilter(
                     jwtTokenUtils,
-                    authService
+                    manager
                 ),
                 AuthorizationFilter.class
             );

@@ -8,7 +8,6 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
-import java.time.LocalDate;
 import java.util.Collection;
 import java.util.Collections;
 
@@ -17,24 +16,20 @@ import java.util.Collections;
 @AllArgsConstructor
 public class CustomUserDetails implements UserDetails {
     private Long userId;
-    private String email;
-    private String password;
+    private String username;
     private String name;
-    private LocalDate birthDate;
     private String authority;
+    //    private String email;
+    private String password;
 
-    public String getEmail() {
-        return this.email;
+    @Override
+    public String getUsername() {
+        return this.username;
     }
 
     @Override
     public String getPassword() {
         return this.password;
-    }
-
-    @Override
-    public String getUsername() {
-        throw new NotImplementedException("There is no username");
     }
 
     @Override

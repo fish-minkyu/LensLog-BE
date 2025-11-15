@@ -26,7 +26,7 @@ public class EmailController {
     // 인증코드 인증
     @PostMapping("/verify")
     public ResponseEntity<?> verify(@RequestBody EmailDto dto) {
-        if (emailService.verificationCode(dto.getEmail(), dto.getVerifyCode())) {
+        if (emailService.verificationCode(null, dto.getEmail(), dto.getVerifyCode())) {
             return ResponseEntity.ok("The verification is success");
         } else {
             return ResponseEntity.badRequest().body("Invalid verification code.");

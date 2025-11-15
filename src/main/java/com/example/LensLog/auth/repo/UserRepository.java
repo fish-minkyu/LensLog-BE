@@ -5,9 +5,12 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Optional;
 
-public interface UserRepository extends JpaRepository<User, Long> {
-    // 사용자 메일로 사용자 찾기
-    Optional<User> findByEmail(String email);
+public interface UserRepository extends JpaRepository<User, Long>, QUserRepository {
+    // ID로 사용자 찾기
+    Optional<User> findByUsername(String username);
+
+    // ID로 사용자가 있는지 확인
+    boolean existsByUsername(String username);
 
     // 사용자 email로 사용자가 있는지 유무 확인
     boolean existsByEmail(String email);
