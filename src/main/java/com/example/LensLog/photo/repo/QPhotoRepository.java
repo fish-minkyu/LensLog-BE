@@ -6,5 +6,5 @@ import java.util.List;
 
 public interface QPhotoRepository {
     // Cursor 페이지네이션
-    List<Photo> searchListCursor(Long lastPhotoId, int pageSize);
+    List<Photo> searchListCursor(Long categoryId, Long lastPhotoId, int pageSize);
 }

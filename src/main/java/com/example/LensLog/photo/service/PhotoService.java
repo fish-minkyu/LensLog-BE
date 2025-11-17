@@ -85,9 +85,9 @@ public class PhotoService {
 
     // 사진 목록 조회(Cursor 방식)
     @Cacheable(value = "photoCursorPages", key = "#lastPhotoId + '_' + #pageSize")
-    public PhotoCursorPageDto getListPhotoCursor(Long lastPhotoId, int pageSize) {
+    public PhotoCursorPageDto getListPhotoCursor(Long categoryId, Long lastPhotoId, int pageSize) {
         log.info("...: DB에서 데이터 조회 중...");
-        List<Photo> photos = photoRepository.searchListCursor(lastPhotoId, pageSize);
+        List<Photo> photos = photoRepository.searchListCursor(categoryId, lastPhotoId, pageSize);
 
         // 가져온 데이터가 pageSize보다 많으면 다음 페이지가 존재한다.
         boolean hasNext = photos.size() > pageSize;

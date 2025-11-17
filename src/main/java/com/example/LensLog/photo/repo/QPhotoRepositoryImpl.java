@@ -16,10 +16,14 @@ public class QPhotoRepositoryImpl implements QPhotoRepository {
     private final JPAQueryFactory queryFactory;
 
     @Override
-    public List<Photo> searchListCursor(Long lastPhotoId, int pageSize) {
+    public List<Photo> searchListCursor(Long categoryId, Long lastPhotoId, int pageSize) {
         QPhoto photo = QPhoto.photo;
 
         BooleanBuilder builder = new BooleanBuilder();
+
+        if (categoryId != null) {
+            builder.and(photo.category.categoryId.eq(categoryId));
+        }
 
         builder.and(photo.thumbnailStatus.eq(ThumbnailStatusEnum.READY.name()));
 

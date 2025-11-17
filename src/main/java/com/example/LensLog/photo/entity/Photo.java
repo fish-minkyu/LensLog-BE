@@ -1,5 +1,6 @@
 package com.example.LensLog.photo.entity;
 
+import com.example.LensLog.category.entity.Category;
 import com.example.LensLog.like.entity.Like;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
@@ -36,6 +37,12 @@ public class Photo {
     private String thumbnailUrl;
     // 썸네일 생성 상태
     private String thumbnailStatus;
+
+    // Category와의 ManyToOne 관계 설정
+    // Photo 여러 개는 하나의 카테고리를 가질 수 있다.
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "category_id")
+    private Category category;
 
     // Like와의 OneToMany 관계 설정
     // Photo 하나는 여러 개의 Like를 가질 수 있다.

@@ -30,10 +30,9 @@ public class PhotoController {
     @GetMapping("/getList")
     public PhotoCursorPageDto getListPhotoCursor(
         @RequestParam(name = "lastPhotoId", required = false) Long lastPhotoId,
-        // PageableDefault는 주로 offset 기반 페이징에서 사용된다.
         @RequestParam(name = "pageSize", defaultValue = "10") int pageSize
         ) {
-        return photoService.getListPhotoCursor(lastPhotoId, pageSize);
+        return photoService.getListPhotoCursor(null, lastPhotoId, pageSize);
     }
 
     // 사진 단일 조회
