@@ -23,7 +23,7 @@ public class PhotoDto {
             .bucketFileUrl(entity.getBucketFileUrl())
             .views(entity.getViews())
             .downloads(entity.getDownloads())
-            .likeCount(entity.getLikes().size())
+            .likeCount(entity.getGoods().size())
             .build();
     }
 }

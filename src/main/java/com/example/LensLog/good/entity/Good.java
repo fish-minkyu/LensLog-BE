@@ -1,4 +1,4 @@
-package com.example.LensLog.like.entity;
+package com.example.LensLog.good.entity;
 
 import com.example.LensLog.photo.entity.Photo;
 import jakarta.persistence.*;
@@ -10,7 +10,7 @@ import lombok.*;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class Like {
+public class Good {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long likeId;

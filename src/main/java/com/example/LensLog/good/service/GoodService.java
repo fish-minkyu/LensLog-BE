@@ -1,9 +1,9 @@
-package com.example.LensLog.like.service;
+package com.example.LensLog.good.service;
 
 import com.example.LensLog.auth.entity.User;
 import com.example.LensLog.common.AuthenticationFacade;
-import com.example.LensLog.like.entity.Like;
-import com.example.LensLog.like.repo.LikeRepository;
+import com.example.LensLog.good.entity.Good;
+import com.example.LensLog.good.repo.GoodRepository;
 import com.example.LensLog.photo.entity.Photo;
 import com.example.LensLog.photo.repo.PhotoRepository;
 import lombok.RequiredArgsConstructor;
@@ -17,14 +17,14 @@ import org.springframework.web.server.ResponseStatusException;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class LikeService {
+public class GoodService {
     private final AuthenticationFacade auth;
-    private final LikeRepository likeRepository;
+    private final GoodRepository goodRepository;
     private final PhotoRepository photoRepository;
 
     // 좋아요 생성
     @Transactional
-    public void saveLike(Long photoId) {
+    public void saveGood(Long photoId) {
         // 인증 확인
         User user = auth.getAuth();
 
@@ -32,26 +32,26 @@ public class LikeService {
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
 
         // 중복 좋아요 여부 확인
-        if (likeRepository.existsByUserIdAndPhoto(user.getUserId(), photo)) {
+        if (goodRepository.existsByUserIdAndPhoto(user.getUserId(), photo)) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "User already liked this photo");
         }
 
-        // Like 엔티티 생성
-        Like newLike = Like.builder()
+        // Good 엔티티 생성
+        Good newGood = Good.builder()
             .userId(user.getUserId())
             .photo(photo)
             .build();
 
-        // Like 엔티티 저장
-        likeRepository.save(newLike);
+        // Good 엔티티 저장
+        goodRepository.save(newGood);
 
-        // Photo 엔티티의 likes 컬렉션 동기화 (양방향 관계 유지)
-        photo.addLike(newLike);
+        // Photo 엔티티의 Votes 컬렉션 동기화 (양방향 관계 유지)
+        photo.addGood(newGood);
     }
 
     // 좋아요 삭제
     @Transactional
-    public void deleteLike(Long photoId) {
+    public void deleteGood(Long photoId) {
         // 인증 확인
         User user = auth.getAuth();
 
@@ -59,18 +59,18 @@ public class LikeService {
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
 
         // 좋아요 여부 확인
-        if (!likeRepository.existsByUserIdAndPhoto(user.getUserId(), photo)) {
+        if (!goodRepository.existsByUserIdAndPhoto(user.getUserId(), photo)) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "User didn't like this photo");
         }
 
-        // Like 엔티티 찾기
-        Like deleteLike = likeRepository.findByUserIdAndPhoto(user.getUserId(), photo)
+        // Good 엔티티 찾기
+        Good deleteGood = goodRepository.findByUserIdAndPhoto(user.getUserId(), photo)
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "User didn't like this photo"));
 
-        // Like 엔티티 삭제
-        likeRepository.delete(deleteLike);
+        // Good 엔티티 삭제
+        goodRepository.delete(deleteGood);
 
-        // Photo 엔티티의 likes 컬렉션 동기화 (양방향 관계 유지)
-        photo.removeLike(deleteLike);
+        // Photo 엔티티의 Goods 컬렉션 동기화 (양방향 관계 유지)
+        photo.removeGood(deleteGood);
     }
 }

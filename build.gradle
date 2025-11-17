@@ -45,8 +45,8 @@ dependencies {
 
     // database
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
-    implementation 'org.xerial:sqlite-jdbc:3.45.1.0' // sqlite
     runtimeOnly 'org.hibernate.orm:hibernate-community-dialects:6.2.4.Final'
+    runtimeOnly 'com.mysql:mysql-connector-j' // mysql
 
     // Redis
     implementation 'org.springframework.boot:spring-boot-starter-data-redis'

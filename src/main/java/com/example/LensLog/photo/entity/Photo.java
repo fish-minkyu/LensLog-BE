@@ -1,7 +1,7 @@
 package com.example.LensLog.photo.entity;
 
 import com.example.LensLog.category.entity.Category;
-import com.example.LensLog.like.entity.Like;
+import com.example.LensLog.good.entity.Good;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
@@ -44,12 +44,12 @@ public class Photo {
     @JoinColumn(name = "category_id")
     private Category category;
 
-    // Like와의 OneToMany 관계 설정
+    // Vote와의 OneToMany 관계 설정
     // Photo 하나는 여러 개의 Like를 가질 수 있다.
     @Builder.Default
     @OneToMany(mappedBy = "photo", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnore // Jackson이 이 필드를 직렬화하지 않도록 설정
-    private List<Like> likes = new ArrayList<>();
+    private List<Good> goods = new ArrayList<>();
 
     // 조회수 증가 메서드
     public void increaseViews() {
@@ -62,14 +62,14 @@ public class Photo {
     }
 
     // Photo에 좋아요 추가
-    public void addLike(Like like) {
-        this.likes.add(like);
-        like.setPhoto(this);
+    public void addGood(Good good) {
+        this.goods.add(good);
+        good.setPhoto(this);
     }
 
     // Photo에 좋아요 삭제
-    public void removeLike(Like like) {
-        this.likes.remove(like);
-        like.setPhoto(null); // Like 엔티티의 Photo 참조를 끊기
+    public void removeGood(Good good) {
+        this.goods.remove(good);
+        good.setPhoto(null); // Like 엔티티의 Photo 참조를 끊기
     }
 }

@@ -1,6 +1,6 @@
-package com.example.LensLog.like.controller;
+package com.example.LensLog.good.controller;
 
-import com.example.LensLog.like.service.LikeService;
+import com.example.LensLog.good.service.GoodService;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
@@ -9,8 +9,8 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/like")
 @RequiredArgsConstructor
-public class LikeController {
-    private final LikeService likeService;
+public class GoodController {
+    private final GoodService goodService;
 
     // 좋아요 생성
     @PostMapping("/good")
@@ -18,7 +18,7 @@ public class LikeController {
         // Post 방식이지만 photoId만 필요하므로 간단하게 @RequestParam 사용
         @RequestParam("photoId") Long photoId
     ) {
-        likeService.saveLike(photoId);
+        goodService.saveGood(photoId);
     }
 
     // 좋아요 삭제
@@ -27,6 +27,6 @@ public class LikeController {
         // Delete 방식이지만 photoId만 필요하므로 간단하게 @RequestParam 사용
         @RequestParam("photoId") Long photoId
     ) {
-        likeService.deleteLike(photoId);
+        goodService.deleteGood(photoId);
     }
 }
