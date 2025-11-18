@@ -287,14 +287,6 @@ public class AuthServiceImpl implements AuthService {
         cookie.setPath("/"); // 모든 경로에서 접근 가능
 
         response.addCookie(cookie);
-
-//        ResponseCookie cookie = ResponseCookie.from(name, token)
-//            .httpOnly(true)
-//            .path("/")
-//            .maxAge(-1)
-//            .build();
-//
-//        response.addHeader(SET_COOKIE, cookie.toString());
     }
 
     // 쿠키 삭제 메서드
