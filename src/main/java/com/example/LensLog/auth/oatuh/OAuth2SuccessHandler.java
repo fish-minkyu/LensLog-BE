@@ -83,6 +83,6 @@ public class OAuth2SuccessHandler
     // Redirect할 기본 URL 설정
     @Override
     protected String determineTargetUrl(HttpServletRequest request, HttpServletResponse response) {
-        return "http://localhost:5173/";
+        return "http://localhost:5173/oauth2/callback";
     }
 }

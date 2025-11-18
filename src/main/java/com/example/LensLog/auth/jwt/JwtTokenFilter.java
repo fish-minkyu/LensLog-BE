@@ -1,7 +1,9 @@
 package com.example.LensLog.auth.jwt;
 
+import com.example.LensLog.constant.TokenConstant;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
@@ -43,50 +45,56 @@ public class JwtTokenFilter extends OncePerRequestFilter {
         FilterChain filterChain
     ) throws ServletException, IOException {
         log.debug("try jwt filter");
-        // 1. Authorization 헤더를 회수
-        String authHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
 
-        // 2. Authorization 헤더가 존재하는지 + Bearer로 시작하는지
-        if (authHeader != null && authHeader.startsWith("Bearer")) {
-            String token = authHeader.split(" ")[1];
+        // 1. auth_token으로 명시된 Access Token 가지고 오기
+        String jwtToken = extractAccessToken(request);
 
-            // 3. Token이 유효한 토큰인지 검사
-            if (jwtTokenUtils.validate(token)) {
-                // 4. 유효하다면 해당 토큰을 바탕으로 사용자 정보를 SecurityContext에 등록
-                SecurityContext context = SecurityContextHolder.createEmptyContext();
-                // 사용자 정보 회수
-                String username = jwtTokenUtils
-                    .parseClaims(token)
-                    .getSubject();
+        // 2. jwtToken이 null이 아니고 토큰이 유효하다면
+        if (jwtToken != null && jwtTokenUtils.validate(jwtToken)) {
+            // 3. 해당 토큰을 바탕으로 사용자 정보를 SecurityContext에 등록
+            SecurityContext context = SecurityContextHolder.createEmptyContext();
+            // 사용자 정보 회수
+            String username = jwtTokenUtils
+                .parseClaims(jwtToken)
+                .getSubject();
 
-                // getAuthorities 메소드의 결과에 따라서 사용자의 권한을 확인
-                UserDetails userDetails = manager.loadUserByUsername(username);
-                for(GrantedAuthority authority : userDetails.getAuthorities()) {
-                    log.info("authority: {}", authority.getAuthority());
-                }
-
-                // 인증 정보 생성
-                AbstractAuthenticationToken authentication =
-                    new UsernamePasswordAuthenticationToken(
-                        userDetails,
-                        token,
-                        userDetails.getAuthorities() // 인증하고 나서 사용자 권한이 들어가게 된다.
-                    );
-
-                // 인증 정보 등록
-                context.setAuthentication(authentication);
-                SecurityContextHolder.setContext(context);
-                log.info("set security context with jwt");
+            // getAuthorities 메소드의 결과에 따라서 사용자의 권한을 확인
+            UserDetails userDetails = manager.loadUserByUsername(username);
+            for(GrantedAuthority authority : userDetails.getAuthorities()) {
+                log.info("authority: {}", authority.getAuthority());
             }
-            else {
-                // 사용자가 잘못된 jwt를 요청할 수 있으므로 기록해둔다.
-                log.warn("jwt validation failed");
-            }
+
+            // 4. 인증 정보 생성
+            AbstractAuthenticationToken authentication =
+                new UsernamePasswordAuthenticationToken(
+                    userDetails,
+                    jwtToken,
+                    userDetails.getAuthorities() // 인증하고 나서 사용자 권한이 들어가게 된다.
+                );
+
+            // 5. 인증 정보 등록
+            context.setAuthentication(authentication);
+            SecurityContextHolder.setContext(context);
+            log.info("set security context with jwt");
+        } else {
+            // 사용자가 잘못된 jwt를 요청할 수 있으므로 기록해둔다.
+            log.warn("jwt validation failed");
         }
 
-        // 5. 다음 필터 호출
+        // 6. 다음 필터 호출
         // doFilter를 호출하지 않으면 Controller까지 요청이 도달하지 못한다.
         // 인증 성공 유무에 상관없이 다음 필터를 호출해줘야 한다.
         filterChain.doFilter(request, response);
+    }
+
+    private String extractAccessToken(HttpServletRequest request) {
+        Cookie[] cookies = request.getCookies();
+        for (Cookie cookie : cookies) {
+            if (TokenConstant.ACCESS_TOKEN.equals(cookie.getName())) {
+                return cookie.getValue();
+            }
+        }
+
+        return null;
     }
 }

@@ -26,12 +26,11 @@ public class AuthController {
 
     // 로그인
     @PostMapping("/login")
-    public ResponseEntity<String> login(
+    public UserDto login(
         @RequestBody UserDto dto,
         HttpServletResponse response
     ) {
-        authService.login(dto, response);
-        return ResponseEntity.ok("Login Success.");
+        return authService.login(dto, response);
     }
 
     // 비밀번호 변경
@@ -72,11 +71,16 @@ public class AuthController {
 
     // JWT 재발급 메서드
     @PostMapping("/refresh")
-    public ResponseEntity<String> reIssueTokens(
+    public UserDto reIssueTokens(
         @CookieValue(name = TokenConstant.REFRESH_TOKEN) String refreshToken,
         HttpServletResponse response
     ) {
-        authService.reIssueTokens(refreshToken, response);
-        return ResponseEntity.ok("Tokens re-issue success.");
+        return authService.reIssueTokens(refreshToken, response);
+    }
+
+    // 유저 정보 반환
+    @GetMapping("/checkLogin")
+    public UserDto checkLogin() {
+        return authService.checkLogin();
     }
 }

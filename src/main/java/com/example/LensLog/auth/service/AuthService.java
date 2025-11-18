@@ -13,10 +13,10 @@ public interface AuthService {
     void issueTokens(UserDetails userDetails, HttpServletResponse response);
 
     // 로그인
-    void login(UserDto dto, HttpServletResponse response);
+    UserDto login(UserDto dto, HttpServletResponse response);
 
     // 토큰 재발급
-    void reIssueTokens(String refreshToken, HttpServletResponse response);
+    UserDto reIssueTokens(String refreshToken, HttpServletResponse response);
 
     // 사용자 존재 유무 email로 확인
     boolean existsByEmail(String email);
@@ -29,4 +29,7 @@ public interface AuthService {
 
     // 회원탈퇴
     void deleteUser(String refreshToken, String password, HttpServletResponse response);
+
+    // 유저 정보 반환
+    UserDto checkLogin();
 }

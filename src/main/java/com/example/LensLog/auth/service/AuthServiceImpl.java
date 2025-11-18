@@ -17,12 +17,15 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseCookie;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
+
+import static org.springframework.http.HttpHeaders.SET_COOKIE;
 
 
 @Slf4j
@@ -104,7 +107,7 @@ public class AuthServiceImpl implements AuthService {
 
     // 로그인
     @Override
-    public void login(UserDto dto, HttpServletResponse response) {
+    public UserDto login(UserDto dto, HttpServletResponse response) {
         UserDetails userDetails;
 
         try {
@@ -126,6 +129,12 @@ public class AuthServiceImpl implements AuthService {
 
         // 3. 토큰 발급(Cookie에 추가)
         issueTokens(userDetails, response);
+
+        UserDto result = new UserDto();
+        result.setUsername(userDetails.getUsername());
+        result.setAuthority(userDetails.getAuthorities().toString());
+
+        return result;
     }
 
     // Access Token & Refresh Token 발급
@@ -142,7 +151,7 @@ public class AuthServiceImpl implements AuthService {
 
     // Access Token과 Refresh Token을 재발급
     @Override
-    public void reIssueTokens(String refreshToken, HttpServletResponse response) {
+    public UserDto reIssueTokens(String refreshToken, HttpServletResponse response) {
         String username;
         String redisKey;
 
@@ -182,6 +191,11 @@ public class AuthServiceImpl implements AuthService {
         // 새로운 Refresh Token 발급 및 Cookie로 반환
         String newRefreshToken = jwtTokenUtils.generateRefreshToken(userDetails);
         makeCookie(TokenConstant.REFRESH_TOKEN, newRefreshToken, response);
+
+        UserDto result = new UserDto();
+        result.setUsername(userDetails.getUsername());
+        result.setAuthority(userDetails.getAuthorities().toString());
+        return result;
     }
 
     // 비밀번호 변경
@@ -266,13 +280,21 @@ public class AuthServiceImpl implements AuthService {
     }
 
     // 쿠키를 만들어 응답에 넣는 메서드
-    private void makeCookie(String cookieName, String token, HttpServletResponse response) {
-        Cookie cookie = new Cookie(cookieName, token);
+    private void makeCookie(String name, String token, HttpServletResponse response) {
+        Cookie cookie = new Cookie(name, token);
         cookie.setHttpOnly(true); // XSS 공격 방지
         cookie.setSecure(false);  // HTTPS에서만 전송 (네트워크 스니핑 방지) -> 개발 중이어서 false
         cookie.setPath("/"); // 모든 경로에서 접근 가능
 
         response.addCookie(cookie);
+
+//        ResponseCookie cookie = ResponseCookie.from(name, token)
+//            .httpOnly(true)
+//            .path("/")
+//            .maxAge(-1)
+//            .build();
+//
+//        response.addHeader(SET_COOKIE, cookie.toString());
     }
 
     // 쿠키 삭제 메서드
@@ -284,5 +306,12 @@ public class AuthServiceImpl implements AuthService {
         cookie.setPath("/");
 
         response.addCookie(cookie);
+    }
+
+    // 유저 정보 반환
+    @Override
+    public UserDto checkLogin() {
+        User user = auth.getAuth();
+        return UserDto.fromEntity(user);
     }
 }
