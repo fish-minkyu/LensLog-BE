@@ -19,6 +19,7 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.util.Optional;
 
 
 // 인증 관련 객체는 Bean 객체로 등록하지 않는다. (Bean 객체로 등록하면 자동으로 Filter로 등록이 된다.)
@@ -88,7 +89,9 @@ public class JwtTokenFilter extends OncePerRequestFilter {
     }
 
     private String extractAccessToken(HttpServletRequest request) {
-        Cookie[] cookies = request.getCookies();
+        Cookie[] cookies = Optional.ofNullable(request.getCookies())
+            .orElse(new Cookie[0]);
+
         for (Cookie cookie : cookies) {
             if (TokenConstant.ACCESS_TOKEN.equals(cookie.getName())) {
                 return cookie.getValue();

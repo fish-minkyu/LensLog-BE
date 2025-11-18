@@ -31,6 +31,11 @@ public class WebSecurityConfig {
         http
             // csrf 보안 해제
             .csrf(AbstractHttpConfigurer::disable)
+            // JWT를 사용하기 때문에 보안 관련 세션 해제
+            .sessionManagement(session -> session
+                // 세션을 저장하지 않는다.
+                .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+            )
             .authorizeHttpRequests(auth -> auth
                 // 전부 허가
                 .requestMatchers(HttpMethod.GET,
@@ -39,13 +44,12 @@ public class WebSecurityConfig {
                     "/api/photo/getOne/{photoId}"
                 )
                 .permitAll()
-                // 익명 사용자 권한
                 .requestMatchers(HttpMethod.POST,
                     // auth API
                     "/api/auth/join",
                     "/api/auth/login"
                     )
-                .anonymous()
+                .permitAll()
                 // 로그인 권한
                 .requestMatchers(HttpMethod.GET,
                     // photo API
@@ -82,11 +86,6 @@ public class WebSecurityConfig {
                     .userService(oAuth2UserService))
             )
 
-            // JWT를 사용하기 때문에 보안 관련 세션 해제
-            .sessionManagement(session -> session
-                // 세션을 저장하지 않는다.
-                .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-            )
             // JWT 필터를 권한 필터 앞에 삽입
             .addFilterBefore(
                 new JwtTokenFilter(
