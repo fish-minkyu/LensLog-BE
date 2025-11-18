@@ -19,7 +19,7 @@ public class CustomUserDetails implements UserDetails {
     private String username;
     private String name;
     private String authority;
-    //    private String email;
+    private String email;
     private String password;
 
     @Override

@@ -31,6 +31,7 @@ public class ThumbnailService {
     private final PhotoRepository photoRepository;
     private final MinioService minioService;
     private final MinioClient minioClient;
+    private final String THUMBNAIL_PREFIX = "thumbnail_";
 
     @Value("${minio.url}")
     private String minioApi;
@@ -62,15 +63,16 @@ public class ThumbnailService {
             photo.setThumbnailStatus(ThumbnailStatusEnum.PROCESSING.name());
 
             // 썸네일용 파일 이름을 만든다.
-            String storedFileName = photo.getStoredFileName();
-            String thumbnailFileName = "thumbnail_" + storedFileName;
+            String fileName = photo.getFileName();
+            String thumbnailFileName = THUMBNAIL_PREFIX + fileName;
             try (
-                InputStream originalPhotoStream = minioService.getFileInputStream(storedFileName);
+                InputStream originalPhotoStream = minioService.getFileInputStream(fileName);
                 ByteArrayOutputStream thumbnailOutputStream = new ByteArrayOutputStream();
                 ) {
                 // 썸네일 생성
                 Thumbnails.of(originalPhotoStream)
-                    .width(150) // 최대 폭을 150px로 설정, 높이는 원본 비율에 맞춰 자동 조절
+                    .width(224) // 최대 폭을 224px로 설정, 높이는 원본 비율에 맞춰 자동 조절
+                    .outputQuality(1.0) // 0.0 ~ 1.0 사이, 기본값은 0.75
                     .toOutputStream(thumbnailOutputStream);
 
                 byte[] thumbnailBytes = thumbnailOutputStream.toByteArray();
@@ -80,7 +82,7 @@ public class ThumbnailService {
                 saveThumbnailFile(thumbnailFileName, thumbnailInputStream, thumbnailBytes.length);
 
                 // 썸네일 URL을 생성하고, DB 업데이트한다.
-                String thumbnailUrl = minioApi + "/" + storedFileName;
+                String thumbnailUrl = minioApi + "/" + THUMBNAIL_BUCKET + "/" + thumbnailFileName;
                 photo.setThumbnailUrl(thumbnailUrl);
                 photo.setThumbnailStatus(ThumbnailStatusEnum.READY.name());
                 photoRepository.save(photo);

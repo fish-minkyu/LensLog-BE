@@ -26,7 +26,6 @@ import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 
 @Slf4j
 @Service
@@ -56,20 +55,21 @@ public class PhotoService {
 
         // 3. 사진 존재한다면, 예외처리를 한다.
         if (existedPhoto.isPresent()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
+            throw new ResponseStatusException(
+                HttpStatus.BAD_REQUEST,
+                "This photo is already uploaded."
+            );
         }
 
-        // 4. 사진이 중복되지 않는다면
-        String storedFileName = UUID.randomUUID().toString() + "_" + multipartFile.getOriginalFilename();
-        // MinIO에 해당 파일을 저장한다.
-        minioService.savePhotoFile(storedFileName, multipartFile);
+        // 4. 사진이 중복되지 않는다면 MinIO에 해당 파일을 저장한다.
+        String fileName = multipartFile.getOriginalFilename();
+        minioService.savePhotoFile(fileName, multipartFile);
 
         // 5. DB에 Photo의 메타 데이터를 저장한다.
-        String minioUrl = minioApi + "/" + storedFileName;
+        String minioUrl = minioApi + "/"  + PHOTO_BUCKET + "/" + fileName;
 
         Photo newPhoto = Photo.builder()
-            .fileName(multipartFile.getOriginalFilename())
-            .storedFileName(storedFileName)
+            .fileName(fileName)
             .bucketFileUrl(minioUrl)
             .hashValue(fileHash)
             .views(0L)
@@ -128,7 +128,7 @@ public class PhotoService {
             photo.increaseDownloads();
 
             // MinIO에서 사진 다운로드 트리거 호출
-            InputStream inputStream = minioService.downloadPhoto(PHOTO_BUCKET, photo.getStoredFileName());
+            InputStream inputStream = minioService.downloadPhoto(PHOTO_BUCKET, photo.getFileName());
 
             // 파일 이름 인코딩: 한국 파일 이름 등에 대비
             String encoderFileName = URLEncoder.encode(photo.getFileName(), StandardCharsets.UTF_8.toString())

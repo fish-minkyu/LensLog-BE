@@ -22,8 +22,8 @@ public class Photo {
 
     // 원본 파일명
     private String fileName;
-    // MinIO에 실제로 저장된 고유 파일명(MinIO 버킷에 중복이름 방지)
-    private String storedFileName;
+//    // MinIO에 실제로 저장된 고유 파일명(MinIO 버킷에 중복이름 방지)
+//    private String storedFileName;
     // 버킷에 저장된 이미지 경로
     private String bucketFileUrl;
     // 해시 값(중복 업로드 방지용)

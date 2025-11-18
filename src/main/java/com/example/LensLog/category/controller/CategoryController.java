@@ -31,9 +31,9 @@ public class CategoryController {
     }
 
     // 카테고리별 photo 조회
-    @GetMapping("/{categoryId}/getList")
+    @GetMapping("/getList")
     public PhotoCursorPageDto getPhotoListGroupByCategory(
-        @PathVariable Long categoryId,
+        @RequestParam(name = "categoryId", required = false) Long categoryId,
         @RequestParam(name = "lastPhotoId", required = false) Long lastPhotoId,
         @RequestParam(name = "pageSize", defaultValue = "10") int pageSize
     ) {

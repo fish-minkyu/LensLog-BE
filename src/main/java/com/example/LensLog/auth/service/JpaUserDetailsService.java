@@ -31,6 +31,7 @@ public class JpaUserDetailsService implements UserDetailsService {
         return CustomUserDetails.builder()
             .username(user.getUsername())
             .password(user.getPassword())
+            .authority(user.getAuthority())
             .build();
     }
 }

@@ -26,7 +26,7 @@ public class MinioService {
 
     // 사진 업로드 메소드
     @Transactional
-    public String savePhotoFile(String storedFileName, MultipartFile multipartFile) throws Exception {
+    public String savePhotoFile(String fileName, MultipartFile multipartFile) throws Exception {
         // 환경변수로 설정한 버킷이 존재한지 확인한다.
         boolean isExist = minioClient.bucketExists(
             BucketExistsArgs.builder()
@@ -44,13 +44,13 @@ public class MinioService {
         // MinIO에 저장한다.
         minioClient.putObject(PutObjectArgs.builder()
             .bucket(PHOTO_BUCKET)
-            .object(storedFileName)
+            .object(fileName)
             .stream(multipartFile.getInputStream(), multipartFile.getSize(), -1)
             .contentType(multipartFile.getContentType())
             .build());
 
         // MinIO에 저장된 경로를 반환한다.
-        return "/" + storedFileName;
+        return "/" + fileName;
     }
 
     // 사진 다운로드 메소드
@@ -82,7 +82,7 @@ public class MinioService {
         minioClient.removeObject(
             RemoveObjectArgs.builder()
                 .bucket(bucketName)
-                .object(photo.getStoredFileName())
+                .object(photo.getFileName())
                 .build()
         );
     }
@@ -96,6 +96,4 @@ public class MinioService {
                 .build()
         );
     }
-
-    //
 }
