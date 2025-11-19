@@ -3,7 +3,11 @@ package com.example.LensLog.photo.service;
 import com.drew.imaging.ImageMetadataReader;
 import com.drew.imaging.ImageProcessingException;
 import com.drew.metadata.exif.ExifSubIFDDirectory;
+import com.example.LensLog.auth.entity.User;
+import com.example.LensLog.common.AuthenticationFacade;
 import com.example.LensLog.common.HashGenerator;
+import com.example.LensLog.good.entity.Good;
+import com.example.LensLog.good.repo.GoodRepository;
 import com.example.LensLog.photo.dto.PhotoCursorPageDto;
 import com.example.LensLog.photo.dto.PhotoDto;
 import com.example.LensLog.photo.entity.Photo;
@@ -44,6 +48,8 @@ public class PhotoService {
     private final PhotoRepository photoRepository;
     private final MinioService minioService;
     private final ApplicationEventPublisher eventPublisher; // 이벤트 퍼블리셔
+    private final AuthenticationFacade auth;
+    private final GoodRepository goodRepository;
 
     @Value("${minio.url}")
     private String minioApi;
@@ -124,8 +130,19 @@ public class PhotoService {
 
         // 조회수 증가
         photo.increaseViews();
+        PhotoDto dto = PhotoDto.fromEntity(photo);
 
-        return PhotoDto.fromEntity(photo);
+        // 로그인 사용자 정보 선택적 조회
+        Optional<User> currentUser = auth.getOptionalAuth();
+        currentUser.ifPresent(user -> {
+           Optional<Good> good =
+               goodRepository.findByUserIdAndPhoto(currentUser.get().getUserId(), photo);
+            if (good.isPresent()) {
+                dto.setIsLiked(true);
+            }
+        });
+
+        return dto;
     }
 
     // 사진 다운로드

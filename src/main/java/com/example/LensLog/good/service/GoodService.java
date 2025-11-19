@@ -13,6 +13,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.util.Optional;
+
 
 @Slf4j
 @Service
@@ -22,55 +24,43 @@ public class GoodService {
     private final GoodRepository goodRepository;
     private final PhotoRepository photoRepository;
 
-    // 좋아요 생성
     @Transactional
-    public void saveGood(Long photoId) {
+    public boolean toggleLike(Long photoId) {
         // 인증 확인
         User user = auth.getAuth();
 
+        // 사진 존재 여부 확인
         Photo photo = photoRepository.findById(photoId)
-            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+            .orElseThrow(() -> new ResponseStatusException(
+                HttpStatus.NOT_FOUND,
+                "해당 사진이 존재하지 않습니다.")
+            );
 
-        // 중복 좋아요 여부 확인
-        if (goodRepository.existsByUserIdAndPhoto(user.getUserId(), photo)) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "User already liked this photo");
+        // 사용자가 이미 해당 게시물에 좋아요를 눌렀는지 확인
+        Optional<Good> existingGood = goodRepository.findByUserIdAndPhoto(user.getUserId(), photo);
+
+        if (existingGood.isPresent()) {
+            // 이미 좋아요를 눌렀다면 좋아요 취소(삭제)
+            Good deleteGood = existingGood.get();
+            goodRepository.delete(deleteGood);
+            photo.removeGood(deleteGood);
+
+            return false; // 좋아요 취소
+        } else {
+            // 좋아요를 누르지 않았다면 새로 추가(생성)
+            // Good 엔티티 생성
+            Good newGood = Good.builder()
+                .userId(user.getUserId())
+                .photo(photo)
+                .build();
+
+            // Good 엔티티 저장
+            goodRepository.save(newGood);
+
+            // Photo 엔티티의 Votes 컬렉션 동기화 (양방향 관계 유지)
+            photo.addGood(newGood);
+
+            return true; // 좋아요 추가
         }
-
-        // Good 엔티티 생성
-        Good newGood = Good.builder()
-            .userId(user.getUserId())
-            .photo(photo)
-            .build();
-
-        // Good 엔티티 저장
-        goodRepository.save(newGood);
-
-        // Photo 엔티티의 Votes 컬렉션 동기화 (양방향 관계 유지)
-        photo.addGood(newGood);
-    }
-
-    // 좋아요 삭제
-    @Transactional
-    public void deleteGood(Long photoId) {
-        // 인증 확인
-        User user = auth.getAuth();
-
-        Photo photo = photoRepository.findById(photoId)
-            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
-
-        // 좋아요 여부 확인
-        if (!goodRepository.existsByUserIdAndPhoto(user.getUserId(), photo)) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "User didn't like this photo");
-        }
-
-        // Good 엔티티 찾기
-        Good deleteGood = goodRepository.findByUserIdAndPhoto(user.getUserId(), photo)
-            .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "User didn't like this photo"));
-
-        // Good 엔티티 삭제
-        goodRepository.delete(deleteGood);
-
-        // Photo 엔티티의 Goods 컬렉션 동기화 (양방향 관계 유지)
-        photo.removeGood(deleteGood);
     }
 }

@@ -54,9 +54,8 @@ public class WebSecurityConfig {
                 .requestMatchers(HttpMethod.GET,
                     // photo API
                     "/api/photo/download/{photoId}",
-                    // like API
-                    "/api/like/good",
-                    "/api/like/delete"
+                    // Good API
+                    "/api/good/{photoId}"
                 )
                 .authenticated()
                 .requestMatchers(HttpMethod.POST,
