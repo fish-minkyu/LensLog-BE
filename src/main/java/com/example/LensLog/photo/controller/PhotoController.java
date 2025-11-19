@@ -21,9 +21,10 @@ public class PhotoController {
     // 사진 생성
     @PostMapping("/upload")
     public void uploadPhoto(
-        @RequestParam("file") MultipartFile file
+        @RequestParam("file") MultipartFile file,
+        @ModelAttribute PhotoDto dto
         ) throws Exception {
-        photoService.uploadPhoto(file);
+        photoService.uploadPhoto(file, dto);
     }
 
     // 사진 목록 조회(Cursor)

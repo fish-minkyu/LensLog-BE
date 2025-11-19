@@ -1,5 +1,8 @@
 package com.example.LensLog.photo.service;
 
+import com.drew.imaging.ImageMetadataReader;
+import com.drew.imaging.ImageProcessingException;
+import com.drew.metadata.exif.ExifSubIFDDirectory;
 import com.example.LensLog.common.HashGenerator;
 import com.example.LensLog.photo.dto.PhotoCursorPageDto;
 import com.example.LensLog.photo.dto.PhotoDto;
@@ -8,6 +11,7 @@ import com.example.LensLog.photo.event.PhotoUploadEvent;
 import com.example.LensLog.photo.repo.PhotoRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.ApplicationEventPublisher;
@@ -21,11 +25,17 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.util.Date;
 import java.util.List;
 import java.util.Optional;
+
+import com.drew.metadata.Metadata;
 
 @Slf4j
 @Service
@@ -46,7 +56,7 @@ public class PhotoService {
 
     // 사진 단일 업로드
     @Transactional
-    public void uploadPhoto(MultipartFile multipartFile) throws Exception {
+    public void uploadPhoto(MultipartFile multipartFile, PhotoDto dto) throws Exception {
         // 1. 사진 파일의 해시 값 계산
         String fileHash = HashGenerator.calculateSha256Hash(multipartFile.getInputStream());
 
@@ -67,9 +77,12 @@ public class PhotoService {
 
         // 5. DB에 Photo의 메타 데이터를 저장한다.
         String minioUrl = minioApi + "/"  + PHOTO_BUCKET + "/" + fileName;
+        LocalDate shotDate = getShotDate(multipartFile);
 
         Photo newPhoto = Photo.builder()
             .fileName(fileName)
+            .location(dto.getLocation())
+            .shotDate(shotDate)
             .bucketFileUrl(minioUrl)
             .hashValue(fileHash)
             .views(0L)
@@ -174,6 +187,30 @@ public class PhotoService {
         } catch (Exception e) {
             log.error("deletePhoto error: {}", e.getMessage());
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    private LocalDate getShotDate(MultipartFile multipartFile) {
+        LocalDate shotDate = null;
+
+        try (InputStream is = multipartFile.getInputStream()) {
+            Metadata metadata = ImageMetadataReader.readMetadata(is);
+
+            ExifSubIFDDirectory directory =
+                metadata.getFirstDirectoryOfType(ExifSubIFDDirectory.class);
+            if (directory != null) {
+                // 촬영일시를 Date 객체로 가지고 온다.
+                Date originalDate = directory.getDateOriginal();
+                if (originalDate != null) {
+                    shotDate =
+                        originalDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+                }
+            }
+
+            return shotDate;
+        } catch (IOException | ImageProcessingException e) {
+            log.error("getShotDate Method error: {}", e.getMessage());
+            throw new RuntimeException(e);
         }
     }
 }

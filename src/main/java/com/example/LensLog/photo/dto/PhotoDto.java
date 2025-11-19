@@ -3,6 +3,8 @@ package com.example.LensLog.photo.dto;
 import com.example.LensLog.photo.entity.Photo;
 import lombok.*;
 
+import java.time.LocalDate;
+
 @Getter
 @Setter
 @Builder
@@ -11,6 +13,8 @@ import lombok.*;
 public class PhotoDto {
     private Long photoId;
     private String fileName;
+    private String location;
+    private LocalDate shotDate;
     private String bucketFileUrl;
     private Long views;
     private Long downloads;
@@ -20,6 +24,8 @@ public class PhotoDto {
         return PhotoDto.builder()
             .photoId(entity.getPhotoId())
             .fileName(entity.getFileName())
+            .location(entity.getLocation())
+            .shotDate(entity.getShotDate())
             .bucketFileUrl(entity.getBucketFileUrl())
             .views(entity.getViews())
             .downloads(entity.getDownloads())
