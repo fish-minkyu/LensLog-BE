@@ -148,6 +148,9 @@ public class PhotoService {
     // 사진 다운로드
     @Transactional
     public ResponseEntity<InputStreamResource> downloadPhoto(Long photoId) throws Exception {
+        // 사용자 인증
+        User user = auth.getAuth();
+
         Photo photo = photoRepository.findById(photoId)
             .orElseThrow(() -> new IllegalArgumentException("Photo don't exists"));
 

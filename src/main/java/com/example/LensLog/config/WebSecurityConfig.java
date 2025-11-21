@@ -8,12 +8,20 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.access.intercept.AuthorizationFilter;
+import org.springframework.security.web.authentication.HttpStatusEntryPoint;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+
+import java.util.Arrays;
+import java.util.Collections;
 
 @Configuration
 @RequiredArgsConstructor
@@ -31,12 +39,16 @@ public class WebSecurityConfig {
         http
             // csrf 보안 해제
             .csrf(AbstractHttpConfigurer::disable)
+            // cors 설정
+            .cors(cors -> cors.configurationSource(corsConfigurationSource()))
             // JWT를 사용하기 때문에 보안 관련 세션 해제
             .sessionManagement(session -> session
                 // 세션을 저장하지 않는다.
                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
             )
             .authorizeHttpRequests(auth -> auth
+                .requestMatchers(HttpMethod.OPTIONS, "/**")
+                .permitAll()
                 // 전부 허가
                 .requestMatchers(HttpMethod.GET,
                     // photo API
@@ -78,6 +90,9 @@ public class WebSecurityConfig {
                 .anyRequest()
                 .permitAll()
             )
+            // 인증되지 않은 사용자가 보호된 리소스 접근 시 처리 방식 지정
+            .exceptionHandling(exceptionHandling -> exceptionHandling
+                .authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED)))
             // OAuth
             .oauth2Login(oauth2Login -> oauth2Login
                 .successHandler(oAuth2SuccessHandler)
@@ -95,5 +110,31 @@ public class WebSecurityConfig {
             );
 
         return http.build();
+    }
+
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration configuration = new CorsConfiguration();
+        // 허용할 Origin
+        configuration.setAllowedOrigins(
+            Arrays.asList("http://localhost:5173")
+        );
+        // 허용할 HTTP Method
+        configuration.setAllowedMethods(
+            Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS")
+        );
+        // 모든 헤더 허용
+        configuration.setAllowedHeaders(Collections.singletonList("*"));
+        // 인증 정보(쿠키 등) 허용
+        configuration.setAllowCredentials(true);
+        // 클라이언트에 노출할 헤더
+        configuration.setExposedHeaders(
+            Arrays.asList("Content-Disposition", "Authorization")
+        );
+
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/api/**", configuration);
+
+        return source;
     }
 }
