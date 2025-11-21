@@ -1,24 +1,18 @@
 package com.example.LensLog.photo.dto;
 
 import com.example.LensLog.photo.entity.Photo;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
 import java.util.ArrayList;
 import java.util.List;
 
 @Getter
 @Setter
+@Builder
 @NoArgsConstructor
+@AllArgsConstructor
 public class PhotoCursorPageDto {
-    private List<Photo> photos;
+    private List<PhotoDto> photos;
     private Long nextCursorId;
     private boolean hasNext;
-
-    public PhotoCursorPageDto(List<Photo> photos, Long nextCursorId, boolean hasNext) {
-        this.photos = new ArrayList<>(photos);
-        this.nextCursorId = nextCursorId;
-        this.hasNext = hasNext;
-    }
 }

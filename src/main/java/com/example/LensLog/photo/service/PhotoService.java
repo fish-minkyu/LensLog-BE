@@ -35,9 +35,11 @@ import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.time.ZoneId;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import com.drew.metadata.Metadata;
 
@@ -97,28 +99,41 @@ public class PhotoService {
 
         photoRepository.save(newPhoto);
 
+        // 화질 이슈로 인한 미사용
         // 6. 트랜잭션이 성공적으로 커밋된 후에 썸네일 생성을 위한 이벤트 발행
         // @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT) 에 의해 처리
-        eventPublisher.publishEvent(new PhotoUploadEvent(newPhoto.getPhotoId()));
+//        eventPublisher.publishEvent(new PhotoUploadEvent(newPhoto.getPhotoId()));
     }
 
     // 사진 목록 조회(Cursor 방식)
-    @Cacheable(value = "photoCursorPages", key = "#lastPhotoId + '_' + #pageSize")
+    @Cacheable(value = "photoCursorPages", key = "#categoryId + '_' + #lastPhotoId + '_' + #pageSize")
     public PhotoCursorPageDto getListPhotoCursor(Long categoryId, Long lastPhotoId, int pageSize) {
         log.info("...: DB에서 데이터 조회 중...");
-        List<Photo> photos = photoRepository.searchListCursor(categoryId, lastPhotoId, pageSize);
+
+        // 다음 페이지 존재 여부 확인을 위해 pageSize보다 1개 더 조회
+        List<Photo> photos = photoRepository.searchListCursor(categoryId, lastPhotoId, pageSize + 1);
 
         // 가져온 데이터가 pageSize보다 많으면 다음 페이지가 존재한다.
         boolean hasNext = photos.size() > pageSize;
-        List<Photo> currentPagePhotos = hasNext ? photos.subList(0, pageSize) : photos;
+        // 실제 현재 페이지에 보여줄 사진들만 추출
+        List<Photo> currentPagePhotosEntities
+            = hasNext ? photos.subList(0, pageSize) : photos;
+
+        List<PhotoDto> photoDtoList = currentPagePhotosEntities.stream()
+            .map(PhotoDto::fromEntity)
+            .collect(Collectors.toCollection(ArrayList::new));
 
         Long nextCursorId = null;
-        if (hasNext && !currentPagePhotos.isEmpty()) {
+        if (hasNext && !photoDtoList.isEmpty()) {
             // 현재 페이지 마지막 사진 ID
-            nextCursorId = currentPagePhotos.get(currentPagePhotos.size() -1).getPhotoId();
+            nextCursorId = photoDtoList.get(photoDtoList.size() -1).getPhotoId();
         }
 
-        return new PhotoCursorPageDto(currentPagePhotos, nextCursorId, hasNext);
+        return PhotoCursorPageDto.builder()
+            .photos(photoDtoList)
+            .nextCursorId(nextCursorId)
+            .hasNext(hasNext)
+            .build();
     }
 
     // 사진 단일 조회

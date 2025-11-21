@@ -1,5 +1,6 @@
 package com.example.LensLog.category.controller;
 
+import com.example.LensLog.category.dto.CategoryDto;
 import com.example.LensLog.category.entity.Category;
 import com.example.LensLog.category.service.CategoryService;
 import com.example.LensLog.photo.dto.PhotoCursorPageDto;
@@ -26,7 +27,7 @@ public class CategoryController {
 
     // 카테고리 리스트 조회
     @GetMapping
-    public List<Category> getCategoryList() {
+    public List<CategoryDto> getCategoryList() {
         return categoryService.getCategoryList();
     }
 

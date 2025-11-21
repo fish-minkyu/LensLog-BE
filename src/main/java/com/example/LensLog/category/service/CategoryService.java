@@ -1,5 +1,6 @@
 package com.example.LensLog.category.service;
 
+import com.example.LensLog.category.dto.CategoryDto;
 import com.example.LensLog.category.entity.Category;
 import com.example.LensLog.category.repo.CategoryRepository;
 import com.example.LensLog.photo.entity.Photo;
@@ -7,6 +8,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Slf4j
@@ -25,8 +27,15 @@ public class CategoryService {
     }
 
     // 카테고리 리스트 조회
-    public List<Category> getCategoryList() {
-        return categoryRepository.findAll();
+    public List<CategoryDto> getCategoryList() {
+        List<CategoryDto> results = new ArrayList<>();
+
+        List<Category> categories = categoryRepository.findAll();
+        for (Category entity : categories) {
+            results.add(CategoryDto.fromEntity(entity));
+        }
+
+        return results;
     }
 
     // 카테고리 수정

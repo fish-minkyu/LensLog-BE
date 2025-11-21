@@ -1,6 +1,7 @@
 package com.example.LensLog.category.entity;
 
 import com.example.LensLog.photo.entity.Photo;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -24,6 +25,7 @@ public class Category {
 
     // 하나의 카테고리는 여러 개의 사진을 가질 수 있다.
     @OneToMany(mappedBy = "category")
+    @JsonManagedReference
     @Builder.Default
     private List<Photo> photos = new ArrayList<>();
 }

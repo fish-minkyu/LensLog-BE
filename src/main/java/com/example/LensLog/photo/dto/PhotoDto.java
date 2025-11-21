@@ -1,5 +1,6 @@
 package com.example.LensLog.photo.dto;
 
+import com.example.LensLog.category.dto.CategoryDto;
 import com.example.LensLog.photo.entity.Photo;
 import lombok.*;
 

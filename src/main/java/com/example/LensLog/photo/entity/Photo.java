@@ -2,6 +2,7 @@ package com.example.LensLog.photo.entity;
 
 import com.example.LensLog.category.entity.Category;
 import com.example.LensLog.good.entity.Good;
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
@@ -45,6 +46,7 @@ public class Photo {
     // Photo 여러 개는 하나의 카테고리를 가질 수 있다.
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "category_id")
+    @JsonBackReference
     private Category category;
 
     // Vote와의 OneToMany 관계 설정
