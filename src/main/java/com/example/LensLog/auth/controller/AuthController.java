@@ -11,6 +11,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @Tag(name = "Auth Controller", description = "사용자 관련 API")
 @RestController
 @RequestMapping("/api/auth")
@@ -42,7 +44,7 @@ public class AuthController {
 
     // 사용자 username 찾기
     @GetMapping("/find/username")
-    public UserDto findUsername(
+    public List<UserDto> findUsername(
         @RequestParam String name,
         @RequestParam String email
     ) {

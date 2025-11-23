@@ -5,6 +5,8 @@ import com.example.LensLog.auth.dto.UserDto;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.security.core.userdetails.UserDetails;
 
+import java.util.List;
+
 public interface AuthService {
     // 회원가입
     UserDto signUp(UserDto dto);
@@ -25,7 +27,7 @@ public interface AuthService {
     void changePassword(PasswordDto dto);
 
     // 사용자 username 찾기
-    UserDto findUsername(String name, String email);
+    List<UserDto> findUsername(String name, String email);
 
     // 로그아웃
     void logout(String refreshToken, HttpServletResponse response);

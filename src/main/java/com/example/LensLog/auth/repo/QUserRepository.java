@@ -3,6 +3,7 @@ package com.example.LensLog.auth.repo;
 
 import com.example.LensLog.auth.entity.User;
 
+import java.util.List;
 import java.util.Optional;
 
 public interface QUserRepository {
@@ -10,5 +11,5 @@ public interface QUserRepository {
     boolean existsUserWithProvider(String provider, String username);
 
     // 사용자 username 찾기
-    Optional<User> findUsername(String name, String email);
+    Optional<List<User>> findUsername(String name, String email);
 }

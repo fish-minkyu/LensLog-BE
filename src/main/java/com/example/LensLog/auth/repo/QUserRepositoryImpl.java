@@ -8,6 +8,7 @@ import io.micrometer.common.util.StringUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+import java.util.List;
 import java.util.Optional;
 
 
@@ -33,7 +34,7 @@ public class QUserRepositoryImpl implements QUserRepository{
     }
 
     @Override
-    public Optional<User> findUsername(String name, String email) {
+    public Optional<List<User>> findUsername(String name, String email) {
         QUser user = QUser.user;
 
         BooleanBuilder builder = new BooleanBuilder();
@@ -45,11 +46,11 @@ public class QUserRepositoryImpl implements QUserRepository{
             builder.and(user.email.eq(email));
         }
 
-        User targetUser = queryFactory
+        List<User> userList = queryFactory
             .selectFrom(user)
             .where(builder)
-            .fetchOne();
+            .fetch();
 
-        return Optional.ofNullable(targetUser);
+        return Optional.ofNullable(userList);
     }
 }

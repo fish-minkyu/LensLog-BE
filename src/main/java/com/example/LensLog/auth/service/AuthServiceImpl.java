@@ -15,6 +15,7 @@ import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.checkerframework.checker.units.qual.A;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -23,6 +24,9 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
+
+import java.util.ArrayList;
+import java.util.List;
 
 
 @Slf4j
@@ -235,18 +239,24 @@ public class AuthServiceImpl implements AuthService {
 
     // 사용자 username 찾기
     @Override
-    public UserDto findUsername(String name, String email) {
-        User targetUser = userRepository.findUsername(name, email)
+    public List<UserDto> findUsername(String name, String email) {
+        List<User> userList = userRepository.findUsername(name, email)
             .orElseThrow(() -> new ResponseStatusException(
                 HttpStatus.NOT_FOUND,
                 "There is no ID."
             ));
 
-        UserDto result = UserDto.builder()
-            .provider(targetUser.getProvider())
-            .username(targetUser.getUsername())
-            .createdDate(targetUser.getCreatedDate())
-            .build();
+        List<UserDto> result = new ArrayList<>();
+        for (User user : userList) {
+            UserDto userDto = UserDto.builder()
+                .provider(user.getProvider())
+                .username(user.getUsername())
+                .name(user.getName())
+                .createdDate(user.getCreatedDate())
+                .build();
+
+            result.add(userDto);
+        }
 
         return result;
     }
