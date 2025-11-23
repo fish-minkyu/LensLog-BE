@@ -3,6 +3,8 @@ package com.example.LensLog.auth.dto;
 import com.example.LensLog.auth.entity.User;
 import lombok.*;
 
+import java.time.LocalDate;
+
 
 @Getter
 @Setter
@@ -17,6 +19,7 @@ public class UserDto {
     private String verifyCode;
     private String provider;
     private String authority;
+    private LocalDate createdDate;
 
     public static UserDto fromEntity(User entity) {
         return UserDto.builder()
@@ -24,6 +27,7 @@ public class UserDto {
             .name(entity.getName())
             .email(entity.getEmail())
             .provider(entity.getProvider())
+            .createdDate(entity.getCreatedDate())
             .build();
     }
 }

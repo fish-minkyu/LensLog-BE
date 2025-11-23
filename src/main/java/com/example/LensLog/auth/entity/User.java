@@ -2,6 +2,9 @@ package com.example.LensLog.auth.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.CreationTimestamp;
+
+import java.time.LocalDate;
 
 
 @Entity
@@ -29,4 +32,8 @@ public class User {
 
     private String provider; // OAuth 전용 컬럼
     private String authority;
+
+    @CreationTimestamp // 엔티티 새성 시 자동으로 현재 시각 저장
+    @Column(nullable = false, updatable = false)
+    private LocalDate createdDate;
 }

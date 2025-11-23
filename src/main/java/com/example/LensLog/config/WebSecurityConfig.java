@@ -51,6 +51,8 @@ public class WebSecurityConfig {
                 .permitAll()
                 // 전부 허가
                 .requestMatchers(HttpMethod.GET,
+                    // auth API
+                    "/api/auth/find/username",
                     // photo API
                     "/api/photo/getList",
                     "/api/photo/getOne/{photoId}"

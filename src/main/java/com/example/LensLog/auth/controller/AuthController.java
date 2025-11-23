@@ -40,12 +40,13 @@ public class AuthController {
         return ResponseEntity.ok("Changing password is success.");
     }
 
-    // 사용자 username 찾기(인증 후 반환)
-    @PostMapping("/find/username")
-    public ResponseEntity<String> verifyCodeAndGetUsername(@RequestBody EmailDto dto) {
-//        return ResponseEntity.ok(authService.verifyAndGetUsername(dto));
-
-        return null;
+    // 사용자 username 찾기
+    @GetMapping("/find/username")
+    public UserDto findUsername(
+        @RequestParam String name,
+        @RequestParam String email
+    ) {
+        return authService.findUsername(name, email);
     }
 
     // 로그아웃

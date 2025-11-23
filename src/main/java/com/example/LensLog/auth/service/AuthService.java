@@ -24,6 +24,9 @@ public interface AuthService {
     // 비밀번호 변경
     void changePassword(PasswordDto dto);
 
+    // 사용자 username 찾기
+    UserDto findUsername(String name, String email);
+
     // 로그아웃
     void logout(String refreshToken, HttpServletResponse response);
 

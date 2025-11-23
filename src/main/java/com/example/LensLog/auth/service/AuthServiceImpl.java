@@ -17,15 +17,12 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseCookie;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
-
-import static org.springframework.http.HttpHeaders.SET_COOKIE;
 
 
 @Slf4j
@@ -237,6 +234,22 @@ public class AuthServiceImpl implements AuthService {
     }
 
     // 사용자 username 찾기
+    @Override
+    public UserDto findUsername(String name, String email) {
+        User targetUser = userRepository.findUsername(name, email)
+            .orElseThrow(() -> new ResponseStatusException(
+                HttpStatus.NOT_FOUND,
+                "There is no ID."
+            ));
+
+        UserDto result = UserDto.builder()
+            .provider(targetUser.getProvider())
+            .username(targetUser.getUsername())
+            .createdDate(targetUser.getCreatedDate())
+            .build();
+
+        return result;
+    }
 
     // 로그아웃
     @Override

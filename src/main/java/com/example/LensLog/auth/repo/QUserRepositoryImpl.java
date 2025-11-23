@@ -4,8 +4,11 @@ import com.example.LensLog.auth.entity.QUser;
 import com.example.LensLog.auth.entity.User;
 import com.querydsl.core.BooleanBuilder;
 import com.querydsl.jpa.impl.JPAQueryFactory;
+import io.micrometer.common.util.StringUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+
+import java.util.Optional;
 
 
 @Slf4j
@@ -27,5 +30,26 @@ public class QUserRepositoryImpl implements QUserRepository{
             .fetchOne();
 
         return targetUser != null ? Boolean.TRUE : Boolean.FALSE;
+    }
+
+    @Override
+    public Optional<User> findUsername(String name, String email) {
+        QUser user = QUser.user;
+
+        BooleanBuilder builder = new BooleanBuilder();
+        if (StringUtils.isNotBlank(name)) {
+            builder.and(user.name.eq(name));
+        }
+
+        if (StringUtils.isNotBlank(email)) {
+            builder.and(user.email.eq(email));
+        }
+
+        User targetUser = queryFactory
+            .selectFrom(user)
+            .where(builder)
+            .fetchOne();
+
+        return Optional.ofNullable(targetUser);
     }
 }
