@@ -42,9 +42,11 @@ public class OAuth2UserServiceImpl extends DefaultOAuth2UserService {
         if (LoginTypeConstant.KAKAO.equals(registrationId)) {
             Map<String, Object> kakaoAccount = oAuth2User.getAttribute("kakao_account");
             Map<String, Object> kakaoProfile = (Map<String, Object>) kakaoAccount.get("profile");
+            Long id = oAuth2User.getAttribute("id");
+            String strId = String.valueOf(id);
 
             attributes.put("provider", LoginTypeConstant.KAKAO);
-            attributes.put("id", kakaoAccount.get("id"));
+            attributes.put("id", strId);
             attributes.put("nickname", kakaoProfile.get("nickname"));
             attributes.put("name", kakaoAccount.get("name"));
             attributes.put("email", kakaoAccount.get("email"));

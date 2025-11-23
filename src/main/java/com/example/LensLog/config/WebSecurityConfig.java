@@ -59,7 +59,10 @@ public class WebSecurityConfig {
                 .requestMatchers(HttpMethod.POST,
                     // auth API
                     "/api/auth/join",
-                    "/api/auth/login"
+                    "/api/auth/login",
+                    // mail API
+                    "/api/mail/send",
+                    "/api/mail/verify"
                     )
                 .permitAll()
                 // 로그인 권한

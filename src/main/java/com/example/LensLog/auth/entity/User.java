@@ -17,7 +17,6 @@ public class User {
     private String username;
     private String password;
 
-    @Column(nullable = false)
     private String name;
     @Setter
     @Column(nullable = false)
