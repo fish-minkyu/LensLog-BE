@@ -36,8 +36,8 @@ public class AuthController {
 
     // 비밀번호 찾기 인증
     @PostMapping("/verification/password")
-    public boolean verificationPassword(@RequestBody UserDto dto) {
-        return authService.verificationPassword(dto);
+    public void verificationPassword(@RequestBody UserDto dto) {
+        authService.verificationPassword(dto);
     }
 
     // 비밀번호 변경

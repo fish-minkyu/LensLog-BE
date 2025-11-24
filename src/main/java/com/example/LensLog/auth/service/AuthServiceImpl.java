@@ -203,7 +203,7 @@ public class AuthServiceImpl implements AuthService {
 
     // 비밀번호 찾기 인증
     @Override
-    public boolean verificationPassword(UserDto dto) {
+    public void verificationPassword(UserDto dto) {
         // 해당 계정이 있는지 확인
         if (!userRepository.existsUsernameWithEmail(dto.getUsername(), dto.getEmail())) {
             throw new ResponseStatusException(
@@ -213,7 +213,12 @@ public class AuthServiceImpl implements AuthService {
         }
 
         // 이메일 인증
-        return emailService.verificationCode(dto.getProvider(), dto.getEmail(), dto.getVerifyCode());
+        if (!emailService.verificationCode(dto.getProvider(), dto.getEmail(), dto.getVerifyCode())) {
+            throw new ResponseStatusException(
+                HttpStatus.BAD_REQUEST,
+                "일치하는 인증번호가 없습니다."
+            );
+        }
     }
 
     // 비밀번호 변경

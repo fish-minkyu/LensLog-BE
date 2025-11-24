@@ -92,7 +92,7 @@ public class EmailService {
 
         String redisKey = EMAIL_PREFIX + toEmail;
         if (Boolean.FALSE.equals(redisTemplate.hasKey(redisKey))) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "일치하는 인증번호가 없습니다.");
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "인증번호가 만료되었습니다.");
         }
 
         String storedCode = redisTemplate.opsForValue().get(redisKey);
