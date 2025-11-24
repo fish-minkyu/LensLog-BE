@@ -18,6 +18,7 @@ public class User {
     private Long userId;
 
     private String username;
+    @Setter
     private String password;
 
     private String name;

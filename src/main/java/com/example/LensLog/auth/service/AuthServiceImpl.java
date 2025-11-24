@@ -2,6 +2,7 @@ package com.example.LensLog.auth.service;
 
 import com.example.LensLog.auth.CustomUserDetails;
 import com.example.LensLog.auth.dto.PasswordDto;
+import com.example.LensLog.auth.dto.RecaptchaResponseDto;
 import com.example.LensLog.auth.dto.UserDto;
 import com.example.LensLog.auth.entity.RoleEnum;
 import com.example.LensLog.auth.entity.User;
@@ -16,6 +17,7 @@ import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -47,9 +49,16 @@ public class AuthServiceImpl implements AuthService {
     private final EmailService emailService;
     // 7. 사용자 인증 정보를 가지고 오는 Util 메서드
     private final AuthenticationFacade auth;
-    // 8. 비밀번호 양식 확인(최소 8자리, 최소 1개의 대문자, 최소 1개의 특수문자를 필수 포함)
+    // 8. Recaptcha 인증을 확인하기 위한 서비스
+    private final RecaptchaService recaptchaService;
+    // 9. 비밀번호 양식 확인(최소 8자리, 최소 1개의 대문자, 최소 1개의 특수문자를 필수 포함)
     private static final String PASSWORD_REGEX
         = "^(?=.*[A-Z])(?=.*[!@#$%^&*()_+\\-=\\[\\]{};':\"\\\\|,.<>\\/?]).{8,}$";
+
+    // ReCAPTCHA v3 점수 임계값 설정
+    // 기본값은 0.5로 설정, 필요에 따라 조정
+    @Value("${recaptcha.threshold:0.5}")
+    private float recaptchaThreshold;
 
     // 회원가입
     @Override
@@ -227,36 +236,76 @@ public class AuthServiceImpl implements AuthService {
         // 인증된 사용자 확인
         User user = auth.getAuth();
 
-        //TODO 소셜 계정인 경우, 비밀번호를 변경할 수 없다.
-
-        // 현재 비밀번호 확인
-        if (!passwordEncoder.matches(dto.getCurrentPassword(), user.getPassword())) {
-            throw new ResponseStatusException(
-                HttpStatus.UNAUTHORIZED,
-                "The password is wrong");
-        }
-
-        // 바꿀 비밀번호와 확인용 비밀번호가 일치하는지 확인
-        if (!passwordEncoder.matches(dto.getChangePassword1(), dto.getChangePassword2())) {
+        String provider = user.getProvider();
+        if (StringUtils.isBlank(provider)) {
             throw new ResponseStatusException(
                 HttpStatus.BAD_REQUEST,
-                "The password didn't match it"
+                "Provider는 null이 될 수 없습니다."
             );
         }
 
-        //TODO 캡차 인증 validation 로직 추가
+        // 소셜 로그인일 경우, Bad Request
+        if (!LoginTypeConstant.LOCAL.equals(provider)) {
+            throw new ResponseStatusException(
+                HttpStatus.BAD_REQUEST,
+                "소셜 로그인은 비밀번호를 변경할 수 없습니다."
+            );
+        }
+
+        // Recaptcha 검증 로직
+        if (StringUtils.isBlank(dto.getRecaptchaResponse())) {
+            throw new ResponseStatusException(
+                HttpStatus.BAD_REQUEST, "reCAPTCHA 인증 정보가 필요합니다."
+            );
+        }
+
+        RecaptchaResponseDto recaptchaResult
+            = recaptchaService.verifyRecaptcha(dto.getRecaptchaResponse());
+
+        if (recaptchaResult == null || !recaptchaResult.isSuccess()) {
+            throw new ResponseStatusException(
+                HttpStatus.BAD_REQUEST,
+                "reCAPTCHA 검증 서비스에 문제가 발생했습니다. 다시 시도해주세요."
+            );
+        }
+
+        // v3: 점수를 확인하여 봇 여부 판단
+        if (recaptchaResult.getScore() < recaptchaThreshold) {
+            // 점수가 낮으면 봇으로 판단
+            throw new ResponseStatusException(
+                HttpStatus.BAD_REQUEST, "로봇 활동으로 의심됩니다. 잠시 후 다시 시도해주세요."
+            );
+        }
+
+        // 바꿀 비밀번호와 확인용 비밀번호가 일치하는지 확인
+        String pwd1 = dto.getChangePassword1();
+        String pwd2 = dto.getChangePassword2();
+        // pwd1와 pwd2가 null이 아니어야 하고
+        if (StringUtils.isNotBlank(pwd1) && StringUtils.isNotBlank(pwd2)) {
+            // pwd1와 pwd2가 서로 같지 않다면 에러를 반환한다.
+            if (!pwd1.equals(pwd2)) {
+                throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST, "The password didn't match it"
+                );
+            }
+        } else {
+            throw new ResponseStatusException(
+                HttpStatus.BAD_REQUEST, "입력값을 다시 확인해주세요."
+            );
+        }
+
+        // 새 비밀번호 유효성 검사
+        if (!isPasswordValid(dto.getChangePassword1())) {
+            throw new ResponseStatusException(
+                HttpStatus.BAD_REQUEST, "비밀번호 규칙에 어긋납니다."
+            );
+        }
 
         // 비밀번호 변경
-        User updatedUser = User.builder()
-            .username(user.getUsername())
-            .password(dto.getChangePassword1())
-            .isVerified(Boolean.TRUE)
-            .name(user.getName())
-//            .email(user.getEmail())
-            .provider(user.getProvider())
-            .authority("ROLE_USER")
-            .build();
-        userRepository.save(updatedUser);
+        String encodedNewPassword = passwordEncoder.encode(dto.getChangePassword1());
+        user.setPassword(encodedNewPassword);
+
+        userRepository.save(user);
     }
 
     // 사용자 username 찾기

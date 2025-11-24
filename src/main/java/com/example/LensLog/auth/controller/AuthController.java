@@ -43,7 +43,7 @@ public class AuthController {
     // 비밀번호 변경
     @PutMapping("/change/password")
     public ResponseEntity<String> changePassword(@RequestBody PasswordDto dto) {
-
+        authService.changePassword(dto);
         return ResponseEntity.ok("Changing password is success.");
     }
 
