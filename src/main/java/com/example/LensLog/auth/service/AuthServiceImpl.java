@@ -15,7 +15,6 @@ import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.checkerframework.checker.units.qual.A;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -109,11 +108,12 @@ public class AuthServiceImpl implements AuthService {
     // 로그인
     @Override
     public UserDto login(UserDto dto, HttpServletResponse response) {
-        UserDetails userDetails;
+        CustomUserDetails userDetails;
 
         try {
             // 1. 사용자 정보 조회
-            userDetails = userDetailsService.loadUserByUsername(dto.getUsername());
+            userDetails
+                = (CustomUserDetails) userDetailsService.loadUserByUsername(dto.getUsername());
         } catch (UsernameNotFoundException e) {
             throw new ResponseStatusException(
                 HttpStatus.UNAUTHORIZED,
@@ -133,6 +133,7 @@ public class AuthServiceImpl implements AuthService {
 
         UserDto result = new UserDto();
         result.setUsername(userDetails.getUsername());
+        result.setProvider(userDetails.getProvider());
         result.setAuthority(userDetails.getAuthorities().toString());
 
         return result;
@@ -197,6 +198,21 @@ public class AuthServiceImpl implements AuthService {
         result.setUsername(userDetails.getUsername());
         result.setAuthority(userDetails.getAuthorities().toString());
         return result;
+    }
+
+    // 비밀번호 찾기 인증
+    @Override
+    public boolean verificationPassword(UserDto dto) {
+        // 해당 계정이 있는지 확인
+        if (!userRepository.existsUsernameWithEmail(dto.getUsername(), dto.getEmail())) {
+            throw new ResponseStatusException(
+                HttpStatus.NOT_FOUND,
+                "일치하는 사용자 계정이 없습니다."
+            );
+        }
+
+        // 이메일 인증
+        return emailService.verificationCode(dto.getProvider(), dto.getEmail(), dto.getVerifyCode());
     }
 
     // 비밀번호 변경

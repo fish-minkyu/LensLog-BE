@@ -1,6 +1,7 @@
 package com.example.LensLog.auth.service;
 
 import com.example.LensLog.constant.LoginTypeConstant;
+import io.micrometer.common.util.StringUtils;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
@@ -80,6 +81,10 @@ public class EmailService {
 
     // 인증 코드 유효성 검사
     public boolean verificationCode(String provider, String toEmail, String verifyCode) {
+        if (StringUtils.isBlank(provider)) {
+            throw new IllegalArgumentException("provider는 null이 될 수 없습니다.");
+        }
+
         // 소셜 로그인으로 가입한 계정일 경우, 이메일 인증을 할 필요가 없다.
         if (!LoginTypeConstant.LOCAL.equals(provider)) {
             return true;
@@ -87,7 +92,7 @@ public class EmailService {
 
         String redisKey = EMAIL_PREFIX + toEmail;
         if (Boolean.FALSE.equals(redisTemplate.hasKey(redisKey))) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND);
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "일치하는 인증번호가 없습니다.");
         }
 
         String storedCode = redisTemplate.opsForValue().get(redisKey);

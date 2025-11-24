@@ -4,6 +4,7 @@ import lombok.Getter;
 
 @Getter
 public class EmailDto {
+    private String provider;
     private String email;
     private String verifyCode; // 인증 코드
 }

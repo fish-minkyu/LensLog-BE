@@ -17,10 +17,11 @@ import java.util.Collections;
 public class CustomUserDetails implements UserDetails {
     private Long userId;
     private String username;
-    private String name;
-    private String authority;
-    private String email;
     private String password;
+    private String name;
+    private String email;
+    private String provider;
+    private String authority;
 
     @Override
     public String getUsername() {
@@ -30,6 +31,10 @@ public class CustomUserDetails implements UserDetails {
     @Override
     public String getPassword() {
         return this.password;
+    }
+
+    public String getProvider() {
+        return this.provider;
     }
 
     @Override

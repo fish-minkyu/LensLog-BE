@@ -1,6 +1,5 @@
 package com.example.LensLog.auth.controller;
 
-import com.example.LensLog.auth.dto.EmailDto;
 import com.example.LensLog.auth.dto.PasswordDto;
 import com.example.LensLog.auth.dto.UserDto;
 import com.example.LensLog.auth.service.AuthService;
@@ -33,6 +32,12 @@ public class AuthController {
         HttpServletResponse response
     ) {
         return authService.login(dto, response);
+    }
+
+    // 비밀번호 찾기 인증
+    @PostMapping("/verification/password")
+    public boolean verificationPassword(@RequestBody UserDto dto) {
+        return authService.verificationPassword(dto);
     }
 
     // 비밀번호 변경

@@ -12,4 +12,7 @@ public interface QUserRepository {
 
     // 사용자 username 찾기
     Optional<List<User>> findUsername(String name, String email);
+
+    // 사용자 계정 존재 유무 확인
+    boolean existsUsernameWithEmail(String username, String email);
 }

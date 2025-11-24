@@ -62,6 +62,7 @@ public class WebSecurityConfig {
                     // auth API
                     "/api/auth/join",
                     "/api/auth/login",
+                    "/api/auth/verification/password",
                     // mail API
                     "/api/mail/send",
                     "/api/mail/verify"

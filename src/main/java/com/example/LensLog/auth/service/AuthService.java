@@ -23,6 +23,9 @@ public interface AuthService {
     // 사용자 존재 유무 email로 확인
     boolean existsByEmail(String email);
 
+    // 비밀번호 찾기 인증
+    boolean verificationPassword(UserDto dto);
+
     // 비밀번호 변경
     void changePassword(PasswordDto dto);
 
