@@ -34,7 +34,7 @@ public class QUserRepositoryImpl implements QUserRepository{
     }
 
     @Override
-    public Optional<List<User>> findUsername(String name, String email) {
+    public Optional<List<User>> findNameWithEmail(String name, String email) {
         QUser user = QUser.user;
 
         BooleanBuilder builder = new BooleanBuilder();

@@ -256,7 +256,7 @@ public class AuthServiceImpl implements AuthService {
     // 사용자 username 찾기
     @Override
     public List<UserDto> findUsername(String name, String email) {
-        List<User> userList = userRepository.findUsername(name, email)
+        List<User> userList = userRepository.findNameWithEmail(name, email)
             .orElseThrow(() -> new ResponseStatusException(
                 HttpStatus.NOT_FOUND,
                 "There is no ID."
