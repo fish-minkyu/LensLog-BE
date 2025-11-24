@@ -3,6 +3,7 @@ package com.example.LensLog.auth.service;
 import com.example.LensLog.auth.CustomUserDetails;
 import com.example.LensLog.auth.dto.PasswordDto;
 import com.example.LensLog.auth.dto.UserDto;
+import com.example.LensLog.auth.entity.RoleEnum;
 import com.example.LensLog.auth.entity.User;
 import com.example.LensLog.auth.jwt.JwtTokenUtils;
 import com.example.LensLog.auth.repo.UserRepository;
@@ -89,7 +90,7 @@ public class AuthServiceImpl implements AuthService {
                 .email(dto.getEmail())
                 .isVerified(Boolean.TRUE)
                 .provider(dto.getProvider())
-                .authority(dto.getAuthority())
+                .authority(RoleEnum.ROLE_USER.name())
                 .build();
 
             userRepository.save(newUser);
