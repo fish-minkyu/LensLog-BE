@@ -20,8 +20,8 @@ public class CategoryController {
 
     // 카테고리 생성
     @PostMapping
-    public ResponseEntity<String> makeCategory(@RequestBody Category entity) {
-        categoryService.makeCategory(entity);
+    public ResponseEntity<String> makeCategory(@RequestBody CategoryDto dto) {
+        categoryService.makeCategory(dto);
         return ResponseEntity.ok("카테고리 생성 완료.");
     }
 

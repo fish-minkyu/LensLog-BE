@@ -18,9 +18,9 @@ public class CategoryService {
     private final CategoryRepository categoryRepository;
 
     // 카테고리 생성
-    public void makeCategory(Category entity) {
+    public void makeCategory(CategoryDto dto) {
         Category category = Category.builder()
-            .categoryName(entity.getCategoryName())
+            .categoryName(dto.getCategoryName())
             .build();
 
         categoryRepository.save(category);
