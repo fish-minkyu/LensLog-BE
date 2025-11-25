@@ -233,8 +233,9 @@ public class AuthServiceImpl implements AuthService {
     // 비밀번호 변경
     @Override
     public void changePassword(PasswordDto dto) {
-        // 인증된 사용자 확인
-        User user = auth.getAuth();
+        // 비밀번호 찾는 계정 찾기
+        User user = userRepository.findOnlyOneUser(dto.getProvider(), dto.getUsername(), dto.getEmail())
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "해당 사용자 계정이 없습니다."));
 
         String provider = user.getProvider();
         if (StringUtils.isBlank(provider)) {

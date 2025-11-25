@@ -15,4 +15,7 @@ public interface QUserRepository {
 
     // 사용자 계정 존재 유무 확인
     boolean existsUsernameWithEmail(String username, String email);
+
+    // 오직 하나의 사용자 조회
+    Optional<User> findOnlyOneUser(String provider, String username, String email);
 }

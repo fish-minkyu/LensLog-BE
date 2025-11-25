@@ -74,4 +74,30 @@ public class QUserRepositoryImpl implements QUserRepository{
 
         return targetUser != null ? Boolean.TRUE : Boolean.FALSE;
     }
+
+    @Override
+    public Optional<User> findOnlyOneUser(String provider, String username, String email) {
+        QUser user = QUser.user;
+
+        BooleanBuilder builder = new BooleanBuilder();
+        if (StringUtils.isNotBlank(provider)) {
+            builder.and(user.provider.eq(provider));
+        }
+
+        if (StringUtils.isNotBlank(username)) {
+            builder.and(user.username.eq(username));
+        }
+
+        if (StringUtils.isNotBlank(email)) {
+            builder.and(user.email.eq(email));
+        }
+
+        User targetUser = queryFactory
+            .selectFrom(user)
+            .where(builder)
+            .fetchOne();
+
+        return Optional.ofNullable(targetUser);
+    }
+
 }
