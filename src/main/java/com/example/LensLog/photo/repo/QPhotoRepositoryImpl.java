@@ -25,11 +25,12 @@ public class QPhotoRepositoryImpl implements QPhotoRepository {
             builder.and(photo.category.categoryId.eq(categoryId));
         }
 
-        builder.and(photo.thumbnailStatus.eq(ThumbnailStatusEnum.READY.name()));
-
         if (lastPhotoId != null) {
             builder.and(photo.photoId.gt(lastPhotoId));
         }
+
+        // 썸네일 미생성으로 인한 주석처리
+        // builder.and(photo.thumbnailStatus.eq(ThumbnailStatusEnum.READY.name()));
 
         return queryFactory
             .selectFrom(photo)
