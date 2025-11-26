@@ -44,7 +44,7 @@ public class AuthController {
     @PutMapping("/change/password")
     public ResponseEntity<String> changePassword(@RequestBody PasswordDto dto) {
         authService.changePassword(dto);
-        return ResponseEntity.ok("Changing password is success.");
+        return ResponseEntity.ok("비밀번호 변경 완료.");
     }
 
     // 사용자 username 찾기
@@ -63,7 +63,7 @@ public class AuthController {
         HttpServletResponse response
     ) {
         authService.logout(refreshToken, response);
-        return ResponseEntity.ok("Logout is success.");
+        return ResponseEntity.ok("로그아웃 성공.");
     }
 
     // 회원탈퇴

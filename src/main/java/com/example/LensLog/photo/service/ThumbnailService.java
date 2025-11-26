@@ -56,7 +56,7 @@ public class ThumbnailService {
         log.info("Started thumbnail generation for Photo ID: {}", photoId);
 
         Photo photo = photoRepository.findById(photoId)
-            .orElseThrow(() -> new IllegalArgumentException("The photo doesn't exist"));
+            .orElseThrow(() -> new IllegalArgumentException("해당 사진은 존재하지 않습니다."));
 
         try {
             // 썸네일 생성 상태를 PROCESSING으로 변경한다.

@@ -59,6 +59,6 @@ public class AuthenticationFacade {
         }
 
         return userRepository.findByUsername(customUserDetails.getUsername())
-            .orElseThrow(() -> new IllegalStateException("There is no user."));
+            .orElseThrow(() -> new IllegalStateException("해당 ID와 일치하는 사용자가 없습니다."));
     }
 }

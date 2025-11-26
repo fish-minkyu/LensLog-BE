@@ -20,16 +20,16 @@ public class EmailController {
     @PostMapping("/send")
     public ResponseEntity<?> emailSend(@RequestBody EmailDto dto) throws MessagingException {
         emailService.sendVerificationEmail(dto.getEmail());
-        return ResponseEntity.ok("Sending mail is success");
+        return ResponseEntity.ok("이메일 전송 성공");
     }
 
     // 인증코드 인증
     @PostMapping("/verify")
     public ResponseEntity<?> verify(@RequestBody EmailDto dto) {
         if (emailService.verificationCode(dto.getProvider(), dto.getEmail(), dto.getVerifyCode())) {
-            return ResponseEntity.ok("The verification is success");
+            return ResponseEntity.ok("인증 성공");
         } else {
-            return ResponseEntity.badRequest().body("Invalid verification code.");
+            return ResponseEntity.badRequest().body("유효하지 않는 인증코드입니다.");
         }
     }
 }

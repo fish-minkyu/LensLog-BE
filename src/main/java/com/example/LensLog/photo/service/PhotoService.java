@@ -78,7 +78,7 @@ public class PhotoService {
         if (existedPhoto.isPresent()) {
             throw new ResponseStatusException(
                 HttpStatus.BAD_REQUEST,
-                "This photo is already uploaded."
+                "해당 사진은 이미 존재합니다."
             );
         }
 
@@ -155,7 +155,7 @@ public class PhotoService {
     @Transactional
     public PhotoDto getPhoto(Long photoId) {
         Photo photo = photoRepository.findById(photoId)
-            .orElseThrow(() -> new IllegalArgumentException("Photo don't exists"));
+            .orElseThrow(() -> new IllegalArgumentException("해당 사진은 존재하지 않습니다."));
 
         // 조회수 증가
         photo.increaseViews();
@@ -181,7 +181,7 @@ public class PhotoService {
         User user = auth.getAuth();
 
         Photo photo = photoRepository.findById(photoId)
-            .orElseThrow(() -> new IllegalArgumentException("Photo don't exists"));
+            .orElseThrow(() -> new IllegalArgumentException("해당사진은 존재하지 않습니다."));
 
         try {
             // 다운로드 횟수 증가
@@ -223,7 +223,7 @@ public class PhotoService {
     @Transactional
     public void deletePhoto(Long photoId) throws Exception {
         Photo photo = photoRepository.findById(photoId)
-            .orElseThrow(() -> new IllegalArgumentException("Photo don't exists"));
+            .orElseThrow(() -> new IllegalArgumentException("해당 사진은 존재하지 않습니다."));
 
         try {
             // DB에서 삭제

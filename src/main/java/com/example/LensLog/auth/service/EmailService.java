@@ -55,7 +55,7 @@ public class EmailService {
             mailSender.send(message);
         } catch (RuntimeException e) {
             log.error("Send a email has an error: {}", e.getMessage());
-            throw new RuntimeException("Unable to send email in sendEmail", e);
+            throw new RuntimeException("Unable to send email in sendEmail: ", e);
         }
     }
 
