@@ -72,6 +72,9 @@ dependencies {
     // Mail
     implementation 'org.springframework.boot:spring-boot-starter-mail'
 
+    // bucket4j
+    implementation 'com.bucket4j:bucket4j-redis:8.7.1' // Redis 연동을 위한 의존성
+
     // dataFaker
     implementation 'net.datafaker:datafaker:2.0.2'
 
