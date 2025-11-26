@@ -38,8 +38,6 @@ public class DataSeeder implements CommandLineRunner {
 
         try {
             makeAdmin();
-            makeCategory();
-
             System.out.println("DataSeeder activation success!!");
         } catch (Exception e) {
             log.error("DataSeeder activation has a error: {}", e.getMessage());
@@ -59,20 +57,5 @@ public class DataSeeder implements CommandLineRunner {
             .build();
 
         userRepository.save(admin);
-    }
-
-    public void makeCategory() {
-        List<Category> params = new ArrayList<>();
-
-        List<String> titles = List.of("제주도", "경주", "홍콩");
-        for (String title : titles) {
-            Category newCategory = Category.builder()
-                .categoryName(title)
-                .build();
-
-            params.add(newCategory);
-        }
-
-        categoryRepository.saveAll(params);
     }
 }

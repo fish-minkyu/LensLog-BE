@@ -4,6 +4,8 @@ import com.drew.imaging.ImageMetadataReader;
 import com.drew.imaging.ImageProcessingException;
 import com.drew.metadata.exif.ExifSubIFDDirectory;
 import com.example.LensLog.auth.entity.User;
+import com.example.LensLog.category.entity.Category;
+import com.example.LensLog.category.repo.CategoryRepository;
 import com.example.LensLog.common.AuthenticationFacade;
 import com.example.LensLog.common.HashGenerator;
 import com.example.LensLog.good.entity.Good;
@@ -52,6 +54,7 @@ public class PhotoService {
     private final ApplicationEventPublisher eventPublisher; // 이벤트 퍼블리셔
     private final AuthenticationFacade auth;
     private final GoodRepository goodRepository;
+    private final CategoryRepository categoryRepository;
 
     @Value("${minio.url}")
     private String minioApi;
@@ -79,11 +82,21 @@ public class PhotoService {
             );
         }
 
-        // 4. 사진이 중복되지 않는다면 MinIO에 해당 파일을 저장한다.
+        // 4. categoryId가 있다면 해당 카테고리를 찾는다.
+        Long categoryId = dto.getCategoryId();
+        Category targetCategory = null;
+        if (categoryId != null) {
+            targetCategory = categoryRepository.findById(dto.getCategoryId())
+                .orElseThrow(() -> new IllegalStateException(
+                    "해당하는 카테고리 ID가 없습니다: " + dto.getCategoryId()
+                ));
+        }
+
+        // 5. 사진이 중복되지 않는다면 MinIO에 해당 파일을 저장한다.
         String fileName = multipartFile.getOriginalFilename();
         minioService.savePhotoFile(fileName, multipartFile);
 
-        // 5. DB에 Photo의 메타 데이터를 저장한다.
+        // 6. DB에 Photo의 메타 데이터를 저장한다.
         String minioUrl = minioApi + "/"  + PHOTO_BUCKET + "/" + fileName;
         LocalDate shotDate = getShotDate(multipartFile);
 
@@ -93,6 +106,7 @@ public class PhotoService {
             .shotDate(shotDate)
             .bucketFileUrl(minioUrl)
             .hashValue(fileHash)
+            .category(targetCategory)
             .views(0L)
             .downloads(0L)
             .build();
@@ -100,7 +114,7 @@ public class PhotoService {
         photoRepository.save(newPhoto);
 
         // 화질 이슈로 인한 미사용
-        // 6. 트랜잭션이 성공적으로 커밋된 후에 썸네일 생성을 위한 이벤트 발행
+        // 7. 트랜잭션이 성공적으로 커밋된 후에 썸네일 생성을 위한 이벤트 발행
         // @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT) 에 의해 처리
 //        eventPublisher.publishEvent(new PhotoUploadEvent(newPhoto.getPhotoId()));
     }
