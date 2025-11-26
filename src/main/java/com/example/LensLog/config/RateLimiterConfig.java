@@ -47,9 +47,9 @@ public class RateLimiterConfig {
     @Bean
     public BucketConfiguration bucketConfiguration() {
         // 초당 1개의 토큰을 리필하고, 최대 1개까지 저장할 수 있는 설정
-        // 초당 1회 요청 제한
-        Refill refill = Refill.intervally(1, Duration.ofSeconds(1));
-        Bandwidth limit = Bandwidth.classic(1, refill);
+        // 초당 5회 요청 제한
+        Refill refill = Refill.intervally(5, Duration.ofSeconds(1));
+        Bandwidth limit = Bandwidth.classic(5, refill);
         return BucketConfiguration.builder().addLimit(limit).build();
     }
 }
