@@ -50,9 +50,9 @@ services:
       start_period: 30s
 
   # 4. Spring Boot 애플리케이션 서비스 정의
-  app:
+  lenslog-be:
     build: .
-    container_name: lenslog-be-app
+    container_name: lenslog-be
     ports:
       - "8080:8080"
     # .env 파일의 모든 변수를 컨테이너 내부 환경 변수로 주입합니다.
@@ -71,3 +71,7 @@ volumes:
   mysql_data:
   redis_data:
   minio_data:
+
+networks:
+  my-network:
+    driver: bridge

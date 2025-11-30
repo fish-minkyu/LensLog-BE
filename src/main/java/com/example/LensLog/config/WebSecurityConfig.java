@@ -123,7 +123,7 @@ public class WebSecurityConfig {
         CorsConfiguration configuration = new CorsConfiguration();
         // 허용할 Origin
         configuration.setAllowedOrigins(
-            Arrays.asList("http://localhost:5173")
+            Arrays.asList("http://localhost:5173", "https://www.lenslog.cloud", "https://lenslog.cloud")
         );
         // 허용할 HTTP Method
         configuration.setAllowedMethods(
