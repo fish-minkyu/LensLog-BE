@@ -39,6 +39,8 @@ services:
     environment:
       MINIO_ROOT_USER: ${MINIO_ROOT_USER}       # .env에서 가져옴
       MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD} # .env에서 가져옴
+      # 브라우저가 접속할 콘솔의 외부 URL을 명시
+      MINIO_BROWSER_REDIRECT_URL: "https://minio.lenslog.cloud"
     command: server /data --console-address ":9001"
     volumes:
       - minio_data:/data
