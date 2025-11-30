@@ -1,0 +1,73 @@
+services:
+  # 1. MySQL 서비스 정의
+  mysql:
+    image: mysql:latest
+    container_name: mysql
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD} # .env에서 가져옴
+      MYSQL_DATABASE: ${MYSQL_DATABASE}           # .env에서 가져옴
+      TZ: ${MYSQL_TZ}                             # .env에서 가져옴
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      # healthcheck는 컨테이너 내부의 환경 변수를 참조합니다.
+      # 여기서는 MYSQL_ROOT_PASSWORD 변수가 컨테이너 내부에 설정되어 있습니다.
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # 2. Redis 서비스 정의
+  redis:
+    image: redis:latest
+    container_name: redis
+    ports:
+      - "6379:6379"
+    command: redis-server --requirepass ${REDIS_SERVICE_PASSWORD} # .env에서 가져옴
+    volumes:
+      - redis_data:/data
+
+  # 3. MinIO 서비스 정의
+  minio:
+    image: minio/minio:RELEASE.2025-04-22T22-12-26Z
+    container_name: minio
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER}       # .env에서 가져옴
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD} # .env에서 가져옴
+    command: server /data --console-address ":9001"
+    volumes:
+      - minio_data:/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+      start_period: 30s
+
+  # 4. Spring Boot 애플리케이션 서비스 정의
+  app:
+    build: .
+    container_name: lenslog-be-app
+    ports:
+      - "8080:8080"
+    # .env 파일의 모든 변수를 컨테이너 내부 환경 변수로 주입합니다.
+    env_file:
+      - ./.env
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_started
+      minio:
+        condition: service_healthy
+
+# 볼륨 정의: 컨테이너가 삭제되어도 데이터가 유지되도록 함
+volumes:
+  mysql_data:
+  redis_data:
+  minio_data:
