@@ -9,6 +9,8 @@ services:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD} # .env에서 가져옴
       MYSQL_DATABASE: ${MYSQL_DATABASE}           # .env에서 가져옴
       TZ: ${MYSQL_TZ}                             # .env에서 가져옴
+      # MySQL 컨테이너가 시작될 때 mysql_native_password를 기본 인증 플러그인으로 사용하도록 설정
+      command: --default-authentication-plugin=mysql_native_password
     volumes:
       - mysql_data:/var/lib/mysql
     healthcheck:
