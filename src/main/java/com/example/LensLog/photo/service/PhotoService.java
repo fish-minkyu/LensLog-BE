@@ -56,8 +56,8 @@ public class PhotoService {
     private final GoodRepository goodRepository;
     private final CategoryRepository categoryRepository;
 
-    @Value("${minio.url}")
-    private String minioApi;
+    @Value("${minio.public.endpoint}")
+    private String minioPublicEndpoint;
 
     @Value("${minio.bucket.photo.name}")
     private String PHOTO_BUCKET;
@@ -97,7 +97,7 @@ public class PhotoService {
         minioService.savePhotoFile(fileName, multipartFile);
 
         // 6. DB에 Photo의 메타 데이터를 저장한다.
-        String minioUrl = minioApi + "/"  + PHOTO_BUCKET + "/" + fileName;
+        String minioUrl = minioPublicEndpoint + "/"  + PHOTO_BUCKET + "/" + fileName;
         LocalDate shotDate = getShotDate(multipartFile);
 
         Photo newPhoto = Photo.builder()
