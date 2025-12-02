@@ -9,6 +9,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -35,6 +36,9 @@ public class OAuth2SuccessHandler
     private final PasswordEncoder passwordEncoder;
     // 사용자 DB를 관리하는 repo
     private final UserRepository userRepository;
+
+    @Value("${spring.security.redirect-url}")
+    private String redirectUrl;
 
     @Override
     public void onAuthenticationSuccess(
@@ -83,6 +87,6 @@ public class OAuth2SuccessHandler
     // Redirect할 기본 URL 설정
     @Override
     protected String determineTargetUrl(HttpServletRequest request, HttpServletResponse response) {
-        return "http://localhost:5173/oauth2/callback";
+        return redirectUrl;
     }
 }

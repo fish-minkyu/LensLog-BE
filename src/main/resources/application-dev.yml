@@ -40,6 +40,7 @@ spring:
     auth-code-expiration-millis: 1800000
 
   security:
+    redirect-url: ${DEV_REDIRECT_URL}
     oauth2:
       client:
         provider:
