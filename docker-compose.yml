@@ -62,6 +62,8 @@ services:
     # .env 파일의 모든 변수를 컨테이너 내부 환경 변수로 주입합니다.
     env_file:
       - ./.env
+    environment:
+      - SPRING_PROFILES_ACTIVE=${SPRING_PROFILES_ACTIVE}
     depends_on:
       mysql:
         condition: service_healthy
