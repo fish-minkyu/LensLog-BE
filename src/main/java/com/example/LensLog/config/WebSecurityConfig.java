@@ -13,7 +13,6 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.oauth2.client.web.OAuth2AuthorizationRequestResolver;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.access.intercept.AuthorizationFilter;
 import org.springframework.security.web.authentication.HttpStatusEntryPoint;
@@ -29,7 +28,6 @@ import java.util.Collections;
 public class WebSecurityConfig {
     private final JwtTokenUtils jwtTokenUtils;
     private final UserDetailsService manager;
-    private final OAuth2AuthorizationRequestResolver authorizationRequestResolver;
     private final OAuth2SuccessHandler oAuth2SuccessHandler;
     private final OAuth2UserServiceImpl oAuth2UserService;
 
@@ -68,7 +66,7 @@ public class WebSecurityConfig {
                     // mail API
                     "/api/mail/send",
                     "/api/mail/verify"
-                    )
+                )
                 .permitAll()
                 // 로그인 권한
                 .requestMatchers(HttpMethod.GET,
@@ -81,18 +79,18 @@ public class WebSecurityConfig {
                 .requestMatchers(HttpMethod.POST,
                     // auth API
                     "/api/auth/refresh"
-                    )
+                )
                 .authenticated()
                 // 관리자 권한
                 .requestMatchers(HttpMethod.POST,
                     // photo API
                     "/api/photo/upload"
-                    )
+                )
                 .hasRole("ADMIN")
                 .requestMatchers(HttpMethod.DELETE,
                     // photo API
                     "/api/photo/delete/{photoId}"
-                    )
+                )
                 .hasRole("ADMIN")
                 // 그 외는 전부 허가
                 .anyRequest()
@@ -103,13 +101,6 @@ public class WebSecurityConfig {
                 .authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED)))
             // OAuth
             .oauth2Login(oauth2Login -> oauth2Login
-                .authorizationEndpoint(authorization -> authorization
-                    .baseUri("/oauth2/authorization")
-                    .authorizationRequestResolver(this.authorizationRequestResolver)
-                )
-                .redirectionEndpoint(redirection -> redirection
-                    .baseUri("/login/oauth2/code/*")
-                )
                 .successHandler(oAuth2SuccessHandler)
                 .userInfoEndpoint(userInfo -> userInfo
                     .userService(oAuth2UserService))

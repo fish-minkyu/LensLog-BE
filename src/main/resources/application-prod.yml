@@ -94,6 +94,9 @@ logging:
     com.querydsl.sql: DEBUG
     org.hibernate.SQL: DEBUG
     org.hibernate.orm.jdbc.bind: TRACE
+    org.springframework.security: DEBUG
+    org.springframework.security.oauth2: DEBUG
+    org.springframework.web.filter.ForwardedHeaderFilter: DEBUG
 
 jwt:
   secret: ${JWT_SECRET}
