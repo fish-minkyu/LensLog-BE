@@ -60,6 +60,10 @@ public class AuthServiceImpl implements AuthService {
     @Value("${recaptcha.threshold:0.5}")
     private float recaptchaThreshold;
 
+    // setSecure: true or false 설정
+    @Value("${https.secure}")
+    private boolean setSecure;
+
     // 회원가입
     @Override
     public UserDto signUp(UserDto dto) {
@@ -378,7 +382,7 @@ public class AuthServiceImpl implements AuthService {
     private void makeCookie(String name, String token, HttpServletResponse response) {
         Cookie cookie = new Cookie(name, token);
         cookie.setHttpOnly(true); // XSS 공격 방지
-        cookie.setSecure(false);  // HTTPS에서만 전송 (네트워크 스니핑 방지) -> 개발 중이어서 false
+        cookie.setSecure(setSecure); // HTTPS에서만 전송 (네트워크 스니핑 방지)
         cookie.setPath("/"); // 모든 경로에서 접근 가능
 
         response.addCookie(cookie);

@@ -95,6 +95,9 @@ logging:
 jwt:
   secret: ${JWT_SECRET}
 
+https:
+  secure: false
+
 minio:
   url: ${MINIO_URL:http://localhost:9000}
   bucket:
