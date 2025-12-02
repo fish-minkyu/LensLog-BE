@@ -151,15 +151,6 @@ public class WebSecurityConfig {
         return source;
     }
 
-    @Bean
-    public FilterRegistrationBean<ForwardedHeaderFilter> forwardHeaderFilter() {
-        FilterRegistrationBean<ForwardedHeaderFilter> filter
-            = new FilterRegistrationBean<>(new ForwardedHeaderFilter());
-
-        filter.setOrder(0);
-        return filter;
-    }
-
     @GetMapping
     public ResponseEntity<Map<String, String>> debugHeaders(HttpServletRequest req) {
         Map<String,String> m = new HashMap<>();
