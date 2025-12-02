@@ -5,6 +5,7 @@ import com.example.LensLog.auth.jwt.JwtTokenUtils;
 import com.example.LensLog.auth.oatuh.OAuth2SuccessHandler;
 import com.example.LensLog.auth.oatuh.OAuth2UserServiceImpl;
 import lombok.RequiredArgsConstructor;
+import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -19,6 +20,7 @@ import org.springframework.security.web.authentication.HttpStatusEntryPoint;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import org.springframework.web.filter.ForwardedHeaderFilter;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -142,5 +144,14 @@ public class WebSecurityConfig {
         source.registerCorsConfiguration("/api/**", configuration);
 
         return source;
+    }
+
+    @Bean
+    public FilterRegistrationBean<ForwardedHeaderFilter> forwardHeaderFilter() {
+        FilterRegistrationBean<ForwardedHeaderFilter> filter
+            = new FilterRegistrationBean<>(new ForwardedHeaderFilter());
+
+        filter.setOrder(0);
+        return filter;
     }
 }
