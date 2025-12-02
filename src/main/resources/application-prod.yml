@@ -46,6 +46,7 @@ spring:
     return-url: ${PROD_REDIRECT_URL}
     oauth2:
       client:
+        proxy-url: https://www.lenslog.cloud
         provider:
           naver:
             authorization-uri: https://nid.naver.com/oauth2.0/authorize
