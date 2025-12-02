@@ -4,12 +4,14 @@ import com.example.LensLog.auth.jwt.JwtTokenFilter;
 import com.example.LensLog.auth.jwt.JwtTokenUtils;
 import com.example.LensLog.auth.oatuh.OAuth2SuccessHandler;
 import com.example.LensLog.auth.oatuh.OAuth2UserServiceImpl;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -17,6 +19,7 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.access.intercept.AuthorizationFilter;
 import org.springframework.security.web.authentication.HttpStatusEntryPoint;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -24,6 +27,8 @@ import org.springframework.web.filter.ForwardedHeaderFilter;
 
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 
 @Configuration
 @RequiredArgsConstructor
@@ -153,5 +158,16 @@ public class WebSecurityConfig {
 
         filter.setOrder(0);
         return filter;
+    }
+
+    @GetMapping
+    public ResponseEntity<Map<String, String>> debugHeaders(HttpServletRequest req) {
+        Map<String,String> m = new HashMap<>();
+        m.put("RequestURL", req.getRequestURL().toString());
+        m.put("Host", req.getHeader("Host"));
+        m.put("X-Forwarded-Host", req.getHeader("X-Forwarded-Host"));
+        m.put("X-Forwarded-Proto", req.getHeader("X-Forwarded-Proto"));
+        m.put("X-Forwarded-Port", req.getHeader("X-Forwarded-Port"));
+        return ResponseEntity.ok(m);
     }
 }
