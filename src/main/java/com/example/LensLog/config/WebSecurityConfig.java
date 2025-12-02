@@ -13,6 +13,7 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.oauth2.client.web.OAuth2AuthorizationRequestResolver;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.access.intercept.AuthorizationFilter;
 import org.springframework.security.web.authentication.HttpStatusEntryPoint;
@@ -28,6 +29,7 @@ import java.util.Collections;
 public class WebSecurityConfig {
     private final JwtTokenUtils jwtTokenUtils;
     private final UserDetailsService manager;
+    private final OAuth2AuthorizationRequestResolver authorizationRequestResolver;
     private final OAuth2SuccessHandler oAuth2SuccessHandler;
     private final OAuth2UserServiceImpl oAuth2UserService;
 
@@ -101,6 +103,13 @@ public class WebSecurityConfig {
                 .authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED)))
             // OAuth
             .oauth2Login(oauth2Login -> oauth2Login
+                .authorizationEndpoint(authorization -> authorization
+                    .baseUri("/oauth2/authorization")
+                    .authorizationRequestResolver(this.authorizationRequestResolver)
+                )
+                .redirectionEndpoint(redirection -> redirection
+                    .baseUri("/login/oauth2/code/*")
+                )
                 .successHandler(oAuth2SuccessHandler)
                 .userInfoEndpoint(userInfo -> userInfo
                     .userService(oAuth2UserService))

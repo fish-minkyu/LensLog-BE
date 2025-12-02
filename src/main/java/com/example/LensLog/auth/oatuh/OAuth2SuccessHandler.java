@@ -37,7 +37,7 @@ public class OAuth2SuccessHandler
     // 사용자 DB를 관리하는 repo
     private final UserRepository userRepository;
 
-    @Value("${spring.security.redirect-url}")
+    @Value("${spring.security.return-url}")
     private String redirectUrl;
 
     @Override
