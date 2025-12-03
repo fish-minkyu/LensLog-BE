@@ -45,7 +45,7 @@ public class Photo {
     // Category와의 ManyToOne 관계 설정
     // Photo 여러 개는 하나의 카테고리를 가질 수 있다.
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "category_id")
+    @JoinColumn(name = "category_id", nullable = true)
     @JsonBackReference
     private Category category;
 

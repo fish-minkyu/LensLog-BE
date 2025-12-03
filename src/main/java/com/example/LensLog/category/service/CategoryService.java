@@ -3,6 +3,7 @@ package com.example.LensLog.category.service;
 import com.example.LensLog.category.dto.CategoryDto;
 import com.example.LensLog.category.entity.Category;
 import com.example.LensLog.category.repo.CategoryRepository;
+import com.example.LensLog.photo.entity.Photo;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -58,6 +59,11 @@ public class CategoryService {
             .orElseThrow(() -> new IllegalStateException(
                 "해당하는 카테고리 ID가 없습니다: " + categoryId
             ));
+
+        // 카테고리에 속한 Photo들의 category 초기화
+        for (Photo photo : targetCategory.getPhotos()) {
+            photo.setCategory(null);
+        }
 
         categoryRepository.delete(targetCategory);
     }
