@@ -109,7 +109,7 @@ minio:
     name: ${MINIO_ACCESS_KEY}
     secret: ${MINIO_SECRET_KEY}
   public:
-    endpoint: ${MINIO_PUBLIC_ENDPOINT:http://minio:9000}
+    endpoint: ${MINIO_PUBLIC_ENDPOINT_DEV}
 
 recaptcha:
   verify-url: https://www.google.com/recaptcha/api/siteverify
