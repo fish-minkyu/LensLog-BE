@@ -58,7 +58,7 @@ jobs:
             
             # 4. Docker Compose를 이용해 서비스 중단 및 재시작 (docker-compose.yml 사용)
             docker-compose -f docker-compose.yml down
-            docker-compose -f docker-compose.yml up -d
+            docker-compose -f docker-compose.yml up -d --build
             
             # 5. Nginx 재시작
             sudo systemctl restart nginx
