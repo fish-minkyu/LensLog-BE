@@ -116,7 +116,7 @@ public class PhotoService {
         // 화질 이슈로 인한 미사용
         // 7. 트랜잭션이 성공적으로 커밋된 후에 썸네일 생성을 위한 이벤트 발행
         // @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT) 에 의해 처리
-//        eventPublisher.publishEvent(new PhotoUploadEvent(newPhoto.getPhotoId()));
+        eventPublisher.publishEvent(new PhotoUploadEvent(newPhoto.getPhotoId()));
     }
 
     // 사진 목록 조회(Cursor 방식)

@@ -4,13 +4,14 @@ import com.example.LensLog.photo.entity.Photo;
 import com.example.LensLog.photo.entity.ThumbnailStatusEnum;
 import com.example.LensLog.photo.event.PhotoUploadEvent;
 import com.example.LensLog.photo.repo.PhotoRepository;
+import com.sksamuel.scrimage.ImmutableImage;
+import com.sksamuel.scrimage.webp.WebpWriter;
 import io.minio.BucketExistsArgs;
 import io.minio.MakeBucketArgs;
 import io.minio.MinioClient;
 import io.minio.PutObjectArgs;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import net.coobird.thumbnailator.Thumbnails;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.retry.annotation.Backoff;
 import org.springframework.retry.annotation.Retryable;
@@ -21,7 +22,6 @@ import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
 
 import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 
 @Slf4j
@@ -33,8 +33,8 @@ public class ThumbnailService {
     private final MinioClient minioClient;
     private final String THUMBNAIL_PREFIX = "thumbnail_";
 
-    @Value("${minio.url}")
-    private String minioApi;
+    @Value("${minio.public.endpoint}")
+    private String minioPublicEndpoint;
 
     @Value("${minio.bucket.thumbnail.name}")
     private String THUMBNAIL_BUCKET;
@@ -64,25 +64,36 @@ public class ThumbnailService {
 
             // 썸네일용 파일 이름을 만든다.
             String fileName = photo.getFileName();
-            String thumbnailFileName = THUMBNAIL_PREFIX + fileName;
+            String baseName = fileName;
+
+            int dotIndex = fileName.lastIndexOf(".");
+            if (dotIndex != -1) {
+                baseName = fileName.substring(0, dotIndex);
+            }
+
+            String thumbnailFileName = baseName + ".webp";
+
             try (
                 InputStream originalPhotoStream = minioService.getFileInputStream(fileName);
-                ByteArrayOutputStream thumbnailOutputStream = new ByteArrayOutputStream();
                 ) {
-                // 썸네일 생성
-                Thumbnails.of(originalPhotoStream)
-                    .width(224) // 최대 폭을 224px로 설정, 높이는 원본 비율에 맞춰 자동 조절
-                    .outputQuality(1.0) // 0.0 ~ 1.0 사이, 기본값은 0.75
-                    .toOutputStream(thumbnailOutputStream);
+                // scrimage로 이미지 로드
+                ImmutableImage image = ImmutableImage.loader().fromStream(originalPhotoStream);
 
-                byte[] thumbnailBytes = thumbnailOutputStream.toByteArray();
+                // 가로 224px 기준으로 리사이즈 (세로는 비율 유지)
+                ImmutableImage resized = image.scaleToWidth(224);
+
+                // WebP 인코딩 (품질 0~100 사이)
+                WebpWriter writer = WebpWriter.DEFAULT.withQ(100);
+
+                byte[] thumbnailBytes = resized.bytes(writer);
 
                 // 썸네일을 MinIO에 저장한다.
-                InputStream thumbnailInputStream = new ByteArrayInputStream(thumbnailBytes);
-                saveThumbnailFile(thumbnailFileName, thumbnailInputStream, thumbnailBytes.length);
+                try (InputStream thumbnailInputStream = new ByteArrayInputStream(thumbnailBytes)) {
+                    saveThumbnailFile(thumbnailFileName, thumbnailInputStream, thumbnailBytes.length);
+                }
 
-                // 썸네일 URL을 생성하고, DB 업데이트한다.
-                String thumbnailUrl = minioApi + "/" + THUMBNAIL_BUCKET + "/" + thumbnailFileName;
+                // 썸네일 URL을 생성하고, DB 업데이트
+                String thumbnailUrl = minioPublicEndpoint + "/" + THUMBNAIL_BUCKET + "/" + thumbnailFileName;
                 photo.setThumbnailUrl(thumbnailUrl);
                 photo.setThumbnailStatus(ThumbnailStatusEnum.READY.name());
                 photoRepository.save(photo);
@@ -118,7 +129,7 @@ public class ThumbnailService {
             .bucket(THUMBNAIL_BUCKET)
             .object(storedFileName)
             .stream(inputStream, size, -1)
-            .contentType("image/jpeg")
+            .contentType("image/webp")
             .build());
 
         // MinIO의 저장된 경로를 반환한다.

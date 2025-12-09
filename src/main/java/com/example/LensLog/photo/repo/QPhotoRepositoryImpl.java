@@ -29,8 +29,8 @@ public class QPhotoRepositoryImpl implements QPhotoRepository {
             builder.and(photo.photoId.gt(lastPhotoId));
         }
 
-        // 썸네일 미생성으로 인한 주석처리
-        // builder.and(photo.thumbnailStatus.eq(ThumbnailStatusEnum.READY.name()));
+        // 썸네일이 생성된 것만 가지고 오기.
+         builder.and(photo.thumbnailStatus.eq(ThumbnailStatusEnum.READY.name()));
 
         return queryFactory
             .selectFrom(photo)
