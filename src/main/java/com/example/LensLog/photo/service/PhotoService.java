@@ -273,11 +273,21 @@ public class PhotoService {
             .location(entity.getLocation())
             .shotDate(entity.getShotDate())
             .bucketFileUrl(cdnEndpoint + "/" + photoBucket + "/" + entity.getFileName())
-            .thumbnailUrl(cdnEndpoint + "/" + thumbnailBucket + "/" + entity.getFileName() + ".webp")
+            .thumbnailUrl(cdnEndpoint + "/" + thumbnailBucket + "/" + getThumbnailName(entity.getFileName()))
             .views(entity.getViews())
             .downloads(entity.getDownloads())
             .likeCount(entity.getGoods().size())
             .categoryId(entity.getCategory() != null ? entity.getCategory().getCategoryId() : null)
             .build();
+    }
+
+    private String getThumbnailName(String fileName) {
+        String originalName = fileName;
+        int dotIndex = fileName.lastIndexOf(".");
+        if (dotIndex != -1) {
+            originalName = fileName.substring(0, dotIndex);
+        }
+
+        return originalName + ".webp";
     }
 }
