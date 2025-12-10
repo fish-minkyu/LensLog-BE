@@ -59,11 +59,14 @@ public class PhotoService {
     @Value("${minio.public.endpoint}")
     private String minioPublicEndpoint;
 
+    @Value("${minio.cdn.endpoint}")
+    private String cdnEndpoint;
+
     @Value("${minio.bucket.photo.name}")
-    private String PHOTO_BUCKET;
+    private String photoBucket;
 
     @Value("${minio.bucket.thumbnail.name}")
-    private String THUMBNAIL_BUCKET;
+    private String thumbnailBucket;
 
     // 사진 단일 업로드
     @Transactional
@@ -97,7 +100,7 @@ public class PhotoService {
         minioService.savePhotoFile(fileName, multipartFile);
 
         // 6. DB에 Photo의 메타 데이터를 저장한다.
-        String minioUrl = minioPublicEndpoint + "/"  + PHOTO_BUCKET + "/" + fileName;
+        String minioUrl = minioPublicEndpoint + "/"  + photoBucket + "/" + fileName;
         LocalDate shotDate = getShotDate(multipartFile);
 
         Photo newPhoto = Photo.builder()
@@ -134,7 +137,7 @@ public class PhotoService {
             = hasNext ? photos.subList(0, pageSize) : photos;
 
         List<PhotoDto> photoDtoList = currentPagePhotosEntities.stream()
-            .map(PhotoDto::fromEntity)
+            .map(this::convertToDto)
             .collect(Collectors.toCollection(ArrayList::new));
 
         Long nextCursorId = null;
@@ -159,7 +162,7 @@ public class PhotoService {
 
         // 조회수 증가
         photo.increaseViews();
-        PhotoDto dto = PhotoDto.fromEntity(photo);
+        PhotoDto dto = convertToDto(photo);
 
         // 로그인 사용자 정보 선택적 조회
         Optional<User> currentUser = auth.getOptionalAuth();
@@ -190,7 +193,7 @@ public class PhotoService {
             photo.increaseDownloads();
 
             // MinIO에서 사진 다운로드 트리거 호출
-            InputStream inputStream = minioService.downloadPhoto(PHOTO_BUCKET, photo.getFileName());
+            InputStream inputStream = minioService.downloadPhoto(photoBucket, photo.getFileName());
 
             // 파일 이름 인코딩: 한국 파일 이름 등에 대비
             String encoderFileName = URLEncoder.encode(photo.getFileName(), StandardCharsets.UTF_8.toString())
@@ -230,9 +233,9 @@ public class PhotoService {
             photoRepository.delete(photo);
 
             // Photo 버킷 삭제
-            minioService.deleteFile(PHOTO_BUCKET, photo);
+            minioService.deleteFile(photoBucket, photo);
             // Thumbnail 버킷 삭제
-            minioService.deleteFile(THUMBNAIL_BUCKET, photo);
+            minioService.deleteFile(thumbnailBucket, photo);
         } catch (Exception e) {
             log.error("deletePhoto error: {}", e.getMessage());
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR);
@@ -261,5 +264,20 @@ public class PhotoService {
             log.error("getShotDate Method error: {}", e.getMessage());
             throw new RuntimeException(e);
         }
+    }
+
+    private PhotoDto convertToDto(Photo entity) {
+        return PhotoDto.builder()
+            .photoId(entity.getPhotoId())
+            .fileName(entity.getFileName())
+            .location(entity.getLocation())
+            .shotDate(entity.getShotDate())
+            .bucketFileUrl(cdnEndpoint + "/" + photoBucket + "/" + entity.getFileName())
+            .thumbnailUrl(cdnEndpoint + "/" + thumbnailBucket + "/" + entity.getFileName() + ".webp")
+            .views(entity.getViews())
+            .downloads(entity.getDownloads())
+            .likeCount(entity.getGoods().size())
+            .categoryId(entity.getCategory() != null ? entity.getCategory().getCategoryId() : null)
+            .build();
     }
 }

@@ -31,13 +31,12 @@ public class ThumbnailService {
     private final PhotoRepository photoRepository;
     private final MinioService minioService;
     private final MinioClient minioClient;
-    private final String THUMBNAIL_PREFIX = "thumbnail_";
 
     @Value("${minio.public.endpoint}")
     private String minioPublicEndpoint;
 
     @Value("${minio.bucket.thumbnail.name}")
-    private String THUMBNAIL_BUCKET;
+    private String thumbnailBucket;
 
     @Async
     @Retryable(
@@ -93,7 +92,7 @@ public class ThumbnailService {
                 }
 
                 // 썸네일 URL을 생성하고, DB 업데이트
-                String thumbnailUrl = minioPublicEndpoint + "/" + THUMBNAIL_BUCKET + "/" + thumbnailFileName;
+                String thumbnailUrl = minioPublicEndpoint + "/" + thumbnailBucket + "/" + thumbnailFileName;
                 photo.setThumbnailUrl(thumbnailUrl);
                 photo.setThumbnailStatus(ThumbnailStatusEnum.READY.name());
                 photoRepository.save(photo);
@@ -114,19 +113,19 @@ public class ThumbnailService {
         // 환경변수로 설정한 버킷이 존재한지 확인한다.
         boolean isExist = minioClient.bucketExists(
             BucketExistsArgs.builder()
-                .bucket(THUMBNAIL_BUCKET)
+                .bucket(thumbnailBucket)
                 .build());
 
         // 존재하지 않다면, 새로 생성한다.
         if (!isExist) {
             minioClient.makeBucket(MakeBucketArgs.builder()
-                .bucket(THUMBNAIL_BUCKET)
+                .bucket(thumbnailBucket)
                 .build());
         }
 
         // MinIO에 저장한다.
         minioClient.putObject(PutObjectArgs.builder()
-            .bucket(THUMBNAIL_BUCKET)
+            .bucket(thumbnailBucket)
             .object(storedFileName)
             .stream(inputStream, size, -1)
             .contentType("image/webp")
