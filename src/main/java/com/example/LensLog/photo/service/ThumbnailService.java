@@ -72,15 +72,11 @@ public class ThumbnailService {
 
             String thumbnailFileName = baseName + ".webp";
 
-            try (
-                InputStream originalPhotoStream = minioService.getFileInputStream(fileName);
-                ) {
+            try (InputStream originalPhotoStream = minioService.getFileInputStream(fileName);) {
                 // scrimage로 이미지 로드
                 ImmutableImage image = ImmutableImage.loader().fromStream(originalPhotoStream);
-
                 // 가로 224px 기준으로 리사이즈 (세로는 비율 유지)
                 ImmutableImage resized = image.scaleToWidth(224);
-
                 // WebP 인코딩 (품질 0~100 사이)
                 WebpWriter writer = WebpWriter.DEFAULT.withQ(100);
 

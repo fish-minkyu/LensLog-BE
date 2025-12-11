@@ -2,7 +2,6 @@ package com.example.LensLog.Data;
 
 import com.example.LensLog.auth.entity.User;
 import com.example.LensLog.auth.repo.UserRepository;
-import com.example.LensLog.category.entity.Category;
 import com.example.LensLog.category.repo.CategoryRepository;
 import com.example.LensLog.constant.LoginTypeConstant;
 import lombok.RequiredArgsConstructor;
@@ -12,8 +11,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
-import java.util.List;
 
 
 @Slf4j
@@ -22,7 +19,6 @@ import java.util.List;
 public class DataSeeder implements CommandLineRunner {
     private final PasswordEncoder passwordEncoder;
     private final UserRepository userRepository;
-    private final CategoryRepository categoryRepository;
     private static final String ADMIN_EMAIL = "e951219@naver.com";
     private static final String PASSWORD = "lensLog123!";
 
