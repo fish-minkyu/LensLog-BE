@@ -60,6 +60,9 @@ public class WebSecurityConfig {
                 .requestMatchers(HttpMethod.GET,
                     // auth API
                     "/api/auth/find/username",
+                    // category API
+                    "/api/category",
+                    "/api/category/getList",
                     // photo API
                     "/api/photo/getList",
                     "/api/photo/getOne/{photoId}"
@@ -75,26 +78,46 @@ public class WebSecurityConfig {
                     "/api/mail/verify"
                 )
                 .permitAll()
+                .requestMatchers(HttpMethod.PUT,
+                    // auth API
+                    "/api/auth/change/password")
+                .permitAll()
                 // 로그인 권한
                 .requestMatchers(HttpMethod.GET,
+                    // auth API
+                    "/api/auth/checkLogin",
                     // photo API
-                    "/api/photo/download/{photoId}",
-                    // Good API
-                    "/api/good/{photoId}"
+                    "/api/photo/download/{photoId}"
                 )
                 .authenticated()
                 .requestMatchers(HttpMethod.POST,
                     // auth API
-                    "/api/auth/refresh"
+                    "/api/auth/refresh",
+                    "/api/auth/logout",
+                    // Good API
+                    "/api/good/{photoId}"
                 )
+                .authenticated()
+                .requestMatchers(HttpMethod.DELETE,
+                    // auth API
+                    "/api/auth/delete"
+                    )
                 .authenticated()
                 // 관리자 권한
                 .requestMatchers(HttpMethod.POST,
+                    // category API
+                    "/api/category",
                     // photo API
                     "/api/photo/upload"
                 )
                 .hasRole("ADMIN")
+                .requestMatchers(HttpMethod.PUT,
+                    // category API
+                    "/api/category/update/{categoryId}")
+                .hasRole("ADMIN")
                 .requestMatchers(HttpMethod.DELETE,
+                    // category API
+                    "/api/category/delete/{categoryId}",
                     // photo API
                     "/api/photo/delete/{photoId}"
                 )
