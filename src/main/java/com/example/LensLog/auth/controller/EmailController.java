@@ -2,6 +2,7 @@ package com.example.LensLog.auth.controller;
 
 import com.example.LensLog.auth.dto.EmailDto;
 import com.example.LensLog.auth.service.EmailService;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.mail.MessagingException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -10,6 +11,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+@Tag(name="Email Controller", description = "이메일 인증 관련 API")
 @RestController
 @RequestMapping("/api/mail")
 @RequiredArgsConstructor

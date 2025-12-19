@@ -5,12 +5,14 @@ import com.example.LensLog.category.entity.Category;
 import com.example.LensLog.category.service.CategoryService;
 import com.example.LensLog.photo.dto.PhotoCursorPageDto;
 import com.example.LensLog.photo.service.PhotoService;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+@Tag(name = "Category Controller", description = "사진 카테고리 관련 API")
 @RestController
 @RequestMapping("/api/category")
 @RequiredArgsConstructor
