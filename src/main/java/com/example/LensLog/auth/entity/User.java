@@ -17,20 +17,27 @@ public class User {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long userId;
 
+    // LensLog 유저명
     private String username;
+
+    // 비밀번호
     @Setter
     private String password;
 
+    // 사용자 이름
     private String name;
+
+    // 사용자 이메일
     @Setter
     @Column(nullable = false)
     private String email;
 
-
+    // 인증 여부
     @Column(nullable = false)
     @Builder.Default
     private Boolean isVerified = false;
 
+    // 로컬 로그인 or 소셜 로그인(네이버, 카카오, 구글)
     private String provider; // OAuth 전용 컬럼
     private String authority;
 
