@@ -177,6 +177,41 @@ public class PhotoService {
         return dto;
     }
 
+    // 유저별 좋아요별 사진 목록 조회(Cursor 방식)
+    public PhotoCursorPageDto getListPhotoCursorByLike(Long lastPhotoId, int pageSize) {
+        // 사용자 인증
+        User user = auth.getAuth();
+
+        // 사용자가 좋아요를 한 사진이 있는지 확인
+        List<Long> photoGoodList = photoRepository.getListGoodPhotoIdByUserId(user.getUserId());
+
+        // 가져온 데이터가 pageSize보다 많으면 다음 페이지가 존재한다.
+        boolean hasNext = photoGoodList.size() > pageSize;
+
+        // 사용자가 좋아요한 사진들 조회
+        List<Photo> photos = photoRepository.getListPhotoCursorByLike(photoGoodList);
+
+        // 실제 현재 페이지에 보여줄 사진들만 추출
+        List<Photo> currentPagePhotosEntities
+            = hasNext ? photos.subList(0, pageSize) : photos;
+
+        List<PhotoDto> photoDtoList = currentPagePhotosEntities.stream()
+            .map(this::convertToDto)
+            .collect(Collectors.toCollection(ArrayList::new));
+
+        Long nextCursorId = null;
+        if (hasNext && !photoDtoList.isEmpty()) {
+            // 현재 페이지 마지막 사진 ID
+            nextCursorId = photoDtoList.get(photoDtoList.size() -1).getPhotoId();
+        }
+
+        return PhotoCursorPageDto.builder()
+            .photos(photoDtoList)
+            .nextCursorId(nextCursorId)
+            .hasNext(hasNext)
+            .build();
+    }
+
     // 사진 다운로드
     @Transactional
     public ResponseEntity<InputStreamResource> downloadPhoto(Long photoId) throws Exception {

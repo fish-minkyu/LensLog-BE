@@ -1,5 +1,7 @@
 package com.example.LensLog.photo.repo;
 
+import com.example.LensLog.good.entity.Good;
+import com.example.LensLog.good.entity.QGood;
 import com.example.LensLog.photo.entity.Photo;
 import com.example.LensLog.photo.entity.QPhoto;
 import com.example.LensLog.photo.entity.ThumbnailStatusEnum;
@@ -15,6 +17,7 @@ import java.util.List;
 public class QPhotoRepositoryImpl implements QPhotoRepository {
     private final JPAQueryFactory queryFactory;
 
+    // Cursor 페이지네이션(카테고리별)
     @Override
     public List<Photo> searchListCursor(Long categoryId, Long lastPhotoId, int pageSize) {
         QPhoto photo = QPhoto.photo;
@@ -39,4 +42,29 @@ public class QPhotoRepositoryImpl implements QPhotoRepository {
             .limit(pageSize + 1)
             .fetch();
     }
+
+    @Override
+    public List<Long> getListGoodPhotoIdByUserId(Long userId) {
+        QPhoto photo = QPhoto.photo;
+        QGood good = QGood.good;
+
+        return queryFactory
+            .select(good.photo.photoId)
+            .from(good)
+            .join(good.photo, photo)
+            .where(good.userId.eq(userId))
+            .fetch();
+    }
+
+    @Override
+    public List<Photo> getListPhotoCursorByLike(List<Long> photoGoodList) {
+        QPhoto photo = QPhoto.photo;
+
+        return queryFactory
+            .selectFrom(photo)
+            .where(photo.photoId.in(photoGoodList))
+            .fetch();
+    }
+
+
 }
