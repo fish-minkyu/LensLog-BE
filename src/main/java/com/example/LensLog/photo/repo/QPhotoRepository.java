@@ -13,4 +13,7 @@ public interface QPhotoRepository {
 
     // 사용자별 좋아요 누른 사진 리스트 조회
     List<Photo> getListPhotoCursorByLike(List<Long> photoGoodList);
+
+    // AI 태깅 또는 OpenSearch doc에 저장 실패한 사진 리스트 조회
+    List<Photo> getListPhotoStatusFailed();
 }

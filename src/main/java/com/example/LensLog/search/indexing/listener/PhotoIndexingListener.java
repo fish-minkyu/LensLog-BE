@@ -18,6 +18,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.event.EventListener;
 import org.springframework.http.HttpStatus;
+import org.springframework.retry.annotation.Backoff;
+import org.springframework.retry.annotation.Retryable;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -40,6 +43,7 @@ public class PhotoIndexingListener {
     @Value("${minio.bucket.thumbnail.name}")
     private String thumbnailBucket;
 
+    @Async
     @EventListener()
     public void handleAfterThumbnailUpload(PhotoThumbnailReadyEvent event) throws Exception {
         Long photoId = event.photoId();
@@ -49,6 +53,15 @@ public class PhotoIndexingListener {
                 , "해당 사진이 없습니다: " + photoId
             ));
 
+        doing(photoId, photo);
+    }
+
+    @Retryable(
+        value = {Exception.class},
+        maxAttempts = 3,
+        backoff = @Backoff(delay = 1000, multiplier = 2) // 지수 백오프: 1초, 2초, 4초
+    )
+    public void doing(Long photoId, Photo photo) throws Exception {
         try {
             // C. OPenAI 태깅 작업 시작
             // OpenAI 태깅용 이미지 bytes

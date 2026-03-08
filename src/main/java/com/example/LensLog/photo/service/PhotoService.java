@@ -15,6 +15,7 @@ import com.example.LensLog.photo.dto.PhotoDto;
 import com.example.LensLog.photo.entity.Photo;
 import com.example.LensLog.photo.event.PhotoUploadEvent;
 import com.example.LensLog.photo.repo.PhotoRepository;
+import com.example.LensLog.search.indexing.listener.PhotoIndexingListener;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -56,6 +57,7 @@ public class PhotoService {
     private final AuthenticationFacade auth;
     private final GoodRepository goodRepository;
     private final CategoryRepository categoryRepository;
+    private final PhotoIndexingListener photoIndexingListener;
 
     @Value("${mode}")
     private String mode;
@@ -282,6 +284,25 @@ public class PhotoService {
         } catch (Exception e) {
             log.error("deletePhoto error: {}", e.getMessage());
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    // AI Status and Search Index Status가 failed 또는 null값인 사진들만 재시도
+    public Boolean retryAiTagsAndSearchIndexing() throws Exception {
+        try {
+            List<Photo> photoList = photoRepository.getListPhotoStatusFailed();
+            if (photoList.isEmpty()) {
+                throw new IllegalArgumentException("실패한 사진 목록이 존재하지 않습니다.");
+            }
+
+            for(Photo photo : photoList) {
+                photoIndexingListener.doing(photo.getPhotoId(), photo);
+            }
+
+            return Boolean.TRUE;
+        } catch (Exception e) {
+            log.error("Retry Tags try failed photoId);");
+            return Boolean.FALSE;
         }
     }
 

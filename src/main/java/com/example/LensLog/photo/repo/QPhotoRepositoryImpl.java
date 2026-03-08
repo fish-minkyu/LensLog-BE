@@ -1,6 +1,5 @@
 package com.example.LensLog.photo.repo;
 
-import com.example.LensLog.good.entity.Good;
 import com.example.LensLog.good.entity.QGood;
 import com.example.LensLog.photo.entity.Photo;
 import com.example.LensLog.photo.entity.QPhoto;
@@ -66,5 +65,18 @@ public class QPhotoRepositoryImpl implements QPhotoRepository {
             .fetch();
     }
 
+    @Override
+    public List<Photo> getListPhotoStatusFailed() {
+        QPhoto photo = QPhoto.photo;
 
+        return queryFactory
+            .selectFrom(photo)
+            .where(
+                photo.aiTagStatus.eq(StatusEnum.FAILED.name())
+                    .or(photo.aiTagStatus.isNull())
+                    .or(photo.searchIndexStatus.eq(StatusEnum.FAILED.name()))
+                    .or(photo.searchIndexStatus.isNull())
+            )
+            .fetch();
+    }
 }

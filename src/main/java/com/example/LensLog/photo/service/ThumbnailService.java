@@ -19,7 +19,6 @@ import org.springframework.retry.annotation.Backoff;
 import org.springframework.retry.annotation.Retryable;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
 
@@ -42,13 +41,13 @@ public class ThumbnailService {
     @Value("${minio.bucket.thumbnail.name}")
     private String thumbnailBucket;
 
-    @Async
+    // uploadPhoto 트랜잭션이 성공적으로 커밋된 후 호출
     @Retryable(
         value = {Exception.class},
         maxAttempts = 3,
         backoff = @Backoff(delay = 1000, multiplier = 2) // 지수 백오프: 1초, 2초, 4초
     )
-    // uploadPhoto 트랜잭션이 성공적으로 커밋된 후 호출
+    @Async
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void generateThumbnailEvent(PhotoUploadEvent event) throws Exception {
         Long photoId = event.getPhotoId();
@@ -93,7 +92,6 @@ public class ThumbnailService {
                 photo.setThumbnailUrl(thumbnailUrl);
                 photo.setThumbnailStatus(StatusEnum.READY.name());
                 photoRepository.save(photo);
-
                 log.info("Thumbnail generation completed for Photo ID: {}", photoId);
 
                 // "썸네일 준비됨' 이벤트 발행
