@@ -23,13 +23,13 @@ public class OpenSearchIndexInitializer implements ApplicationRunner {
 
     private final RestClient restClient;
 
-    @Value("${lenslog.opensearch.initIndex:true}")
+    @Value("${opensearch.initIndex:true}")
     private boolean initIndex;
 
-    @Value("${lenslog.opensearch.indexVersioned:lenslog-photos-v1}")
+    @Value("${opensearch.indexVersioned:lenslog-photos-v1}")
     private String indexVersioned;
 
-    @Value("${lenslog.opensearch.indexAlias:lenslog-photos}")
+    @Value("${opensearch.indexAlias:lenslog-photos}")
     private String indexAlias;
 
     @Override

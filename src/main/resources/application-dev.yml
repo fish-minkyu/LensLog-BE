@@ -132,20 +132,13 @@ opensearch:
   scheme: http
   username: ${OPENSEARCH_USERNAME}
   password: ${OPENSEARCH_PASSWORD}
-
-lenslog:
-  opensearch:
-    indexAlias: lenslog-photos
-    indexVersioned: lenslog-photos-v1
-    initIndex: true
+  indexAlias: lenslog-photos
+  indexVersioned: lenslog-photos-v1
+  initIndex: true
 
 embedding:
   baseUrl: ${EMBEDDING_BASEURL}
   timeoutMs: 15000
-
-openai:
-  apiKey: ${OPENAI_API_KEY}
-  model: ${OPENAI_MODEL}
 
 gemini:
   apiKey: ${GEMINI_API_KEY}

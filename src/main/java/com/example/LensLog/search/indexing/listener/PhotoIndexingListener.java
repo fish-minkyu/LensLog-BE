@@ -42,7 +42,6 @@ public class PhotoIndexingListener {
 
     @EventListener()
     public void handleAfterThumbnailUpload(PhotoThumbnailReadyEvent event) throws Exception {
-        log.info("PhotoThumbnailReadyEvent 시작");
         Long photoId = event.photoId();
 
         Photo photo = photoRepository.findById(photoId)
@@ -91,7 +90,6 @@ public class PhotoIndexingListener {
             photo.setSearchIndexStatus(StatusEnum.READY.name());
 
             log.info("indexed photoId = {}", photo.getPhotoId());
-            log.info("PhotoThumbnailReadyEvent 종료");
         } catch (AiTaggingException e) {
             log.error("AI tagging failed photoId = {}, msg = {}", photoId, e.getMessage(), e);
             photo.setAiTagStatus(StatusEnum.FAILED.name());
