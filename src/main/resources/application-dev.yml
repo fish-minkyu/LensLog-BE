@@ -147,6 +147,10 @@ openai:
   apiKey: ${OPENAI_API_KEY}
   model: ${OPENAI_MODEL}
 
+gemini:
+  apiKey: ${GEMINI_API_KEY}
+  model: gemini-3-flash-preview
+
 # Naver
 #            "response": {
 #              "email": "openapi@naver.com",

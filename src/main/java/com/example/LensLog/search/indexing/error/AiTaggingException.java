@@ -8,10 +8,10 @@ public class AiTaggingException extends RuntimeException {
     private final Enum reason;
 
     public enum AiErrorReason {
-        OPENAI_HTTP_ERROR,
-        OPENAI_NON_2XX,
-        OPENAI_EMPTY_BODY,
-        OPENAI_PARSE_ERROR
+        HTTP_ERROR,
+        NON_2XX,
+        EMPTY_BODY,
+        PARSE_ERROR
     }
 
     public AiTaggingException(Long photoId, AiErrorReason reason, String message) {

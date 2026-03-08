@@ -24,47 +24,67 @@ public class AITaggingService {
     private final RestTemplate restTemplate;
     private final ObjectMapper om = new ObjectMapper();
 
-    @Value("${openai.apiKey}")
+    @Value("${gemini.apiKey}")
     private String apiKey;
 
-    @Value("${openai.model:gpt-4.1-mini}")
+    @Value("${gemini.model:gemini-3-flash-preview}")
     private String model;
 
     public TaggingResult generateTagsAndCaption(Long photoId, byte[] imageBytes) {
-        String dataUrl
-            = "data:image/webp;base64," + Base64.getEncoder().encodeToString(imageBytes);
-        // Responses API payload (JSON만 출력하도록 강하게 지시)
+        String base64Image = Base64.getEncoder().encodeToString(imageBytes);
+
         String payload = """
         {
-          "model": "%s",
-          "input": [
+          "contents": [
             {
-              "role": "user",
-              "content": [
+              "parts": [
                 {
-                  "type": "input_text",
-                  "text": "너는 이미지 검색용 태그 생성기야. 아래 이미지에서 검색에 도움되는 tags 15개(한국어 우선, 필요시 영어 병기)와 caption 1문장을 JSON으로만 출력해. 형식: {\\\"caption\\\":\\\"...\\\",\\\"tags\\\":[\\\"...\\\",...]} 다른 문장/설명 금지."
+                  "text": "너는 이미지 검색용 태그 생성기야. 아래 이미지에서 검색에 도움되는 tags 15개(한국어 우선, 필요시 영어 병기)와 caption 1문장을 JSON으로만 출력해."
                 },
                 {
-                  "type": "input_image",
-                  "image_url": "%s"
+                  "inline_data": {
+                    "mime_type": "image/webp",
+                    "data": "%s"
+                  }
                 }
               ]
             }
-          ]
+          ],
+          "generationConfig": {
+            "responseMimeType": "application/json",
+            "responseJsonSchema": {
+              "type": "object",
+              "properties": {
+                "caption": {
+                  "type": "string",
+                  "description": "이미지를 한 문장으로 설명하는 한국어 caption"
+                },
+                "tags": {
+                  "type": "array",
+                  "description": "검색용 태그 15개",
+                  "items": {
+                    "type": "string"
+                  },
+                  "minItems": 15,
+                  "maxItems": 15
+                }
+              },
+              "required": ["caption", "tags"]
+            }
+          }
         }
-        """.formatted(model, dataUrl);
+        """.formatted(base64Image);
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
-        headers.setBearerAuth(apiKey);
+        headers.set("x-goog-api-key", apiKey);
 
         HttpEntity<String> req = new HttpEntity<>(payload, headers);
 
         String body;
         try {
             ResponseEntity<String> res = restTemplate.exchange(
-                "https://api.openai.com/v1/responses",
+                "https://generativelanguage.googleapis.com/v1beta/models/" + model + ":generateContent",
                 HttpMethod.POST,
                 req,
                 String.class
@@ -74,39 +94,50 @@ public class AITaggingService {
             if (body == null || body.isBlank()) {
                 throw new AiTaggingException(
                     photoId,
-                    AiTaggingException.AiErrorReason.OPENAI_EMPTY_BODY,
-                    "OpenAI response body is empty");
+                    AiTaggingException.AiErrorReason.EMPTY_BODY,
+                    "Gemini response body is empty"
+                );
             }
         } catch (HttpStatusCodeException e) {
-            // 4xx, 5xx 에러
             String resBody = e.getResponseBodyAsString();
             throw new AiTaggingException(
                 photoId,
-                AiTaggingException.AiErrorReason.OPENAI_NON_2XX,
-                "OpenAI returned " + e.getStatusCode() + " body=" + resBody,
+                AiTaggingException.AiErrorReason.NON_2XX,
+                "Gemini returned " + e.getStatusCode() + " body=" + resBody,
                 e
             );
         } catch (ResourceAccessException e) {
-            // 타임아웃, DNS, 연결 문제
             throw new AiTaggingException(
                 photoId,
-                AiTaggingException.AiErrorReason.OPENAI_HTTP_ERROR,
-                "OpenAI network error: " + e.getMessage(),
-                e);
+                AiTaggingException.AiErrorReason.HTTP_ERROR,
+                "Gemini network error: " + e.getMessage(),
+                e
+            );
         } catch (Exception e) {
             throw new AiTaggingException(
                 photoId,
-                AiTaggingException.AiErrorReason.OPENAI_HTTP_ERROR,
-                "OpenAI request failed: " + e.getMessage(),
-                e);
+                AiTaggingException.AiErrorReason.HTTP_ERROR,
+                "Gemini request failed: " + e.getMessage(),
+                e
+            );
         }
 
-        // 파싱 작업 시작
         try {
             JsonNode root = om.readTree(body);
-            String outText = root.path("output_text").asText(null);
+            String outText = root.path("candidates")
+                .path(0)
+                .path("content")
+                .path("parts")
+                .path(0)
+                .path("text")
+                .asText(null);
+
             if (outText == null || outText.isBlank()) {
-                outText = findFirstText(root);
+                throw new AiTaggingException(
+                    photoId,
+                    AiTaggingException.AiErrorReason.PARSE_ERROR,
+                    "Gemini text response is empty"
+                );
             }
 
             JsonNode parsed = om.readTree(outText);
@@ -120,24 +151,10 @@ public class AITaggingService {
         } catch (Exception e) {
             throw new AiTaggingException(
                 photoId,
-                AiTaggingException.AiErrorReason.OPENAI_PARSE_ERROR,
-                "OpenAI response parse failed",
-                e);
+                AiTaggingException.AiErrorReason.PARSE_ERROR,
+                "Gemini response parse failed",
+                e
+            );
         }
-    }
-
-    private String findFirstText(JsonNode root) {
-        // output[0].content[0].text 같은 구조를 대충 훑어서 text를 찾는 보수적 처리
-        JsonNode output = root.path("output");
-        if (output.isArray() && output.size() > 0) {
-            JsonNode content = output.get(0).path("content");
-
-            if (content.isArray() && content.size() > 0) {
-                JsonNode text = content.get(0).path("text");
-                if (!text.isMissingNode()) return text.asText("");
-            }
-        }
-
-        return "";
     }
 }

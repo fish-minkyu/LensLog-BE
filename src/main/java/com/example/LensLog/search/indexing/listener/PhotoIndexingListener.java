@@ -5,12 +5,14 @@ import com.example.LensLog.photo.entity.StatusEnum;
 import com.example.LensLog.photo.event.PhotoThumbnailReadyEvent;
 import com.example.LensLog.photo.repo.PhotoRepository;
 import com.example.LensLog.photo.service.MinioService;
+import com.example.LensLog.search.dto.TaggingResult;
 import com.example.LensLog.search.indexing.EmbeddingClient;
 import com.example.LensLog.search.dto.SearchReqDto;
 import com.example.LensLog.search.indexing.error.AiTaggingException;
 import com.example.LensLog.search.indexing.error.IndexingException;
 import com.example.LensLog.search.indexing.service.AITaggingService;
 import com.example.LensLog.search.indexing.service.PhotoIndexWriter;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -54,7 +56,7 @@ public class PhotoIndexingListener {
             byte[] imgBytes = loadImageBytes(photo);
 
             // OpenAI에 태깅 요청
-            var tagging = aiTaggingService.generateTagsAndCaption(photoId, imgBytes);
+            TaggingResult tagging = aiTaggingService.generateTagsAndCaption(photoId, imgBytes);
             String caption = tagging.getCaption();
             List<String> tags = tagging.getTags();
 
@@ -80,7 +82,11 @@ public class PhotoIndexingListener {
             // E. OpenSearch doc 저장
             searchIndexService.index(doc);
 
-            // photo 상태값 저장
+            // photo 업데이트
+            String tagsJson = new ObjectMapper().writeValueAsString(tags == null ? List.of() : tags);
+
+            photo.setAiTags(tagsJson);
+            photo.setAiCaption(caption);
             photo.setAiTagStatus(StatusEnum.READY.name());
             photo.setSearchIndexStatus(StatusEnum.READY.name());
 
