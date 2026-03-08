@@ -18,7 +18,7 @@ import org.springframework.stereotype.Service;
 public class PhotoIndexWriter {
     private final OpenSearchClient openSearchClient;
 
-    @Value("${lenslog.opensearch.indexVersioned}")
+    @Value("${opensearch.indexVersioned}")
     private String indexName;
 
     // 벡터 포함해서 저장하는 메서드

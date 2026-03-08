@@ -17,15 +17,16 @@ import java.util.ArrayList;
 public class PhotoVectorSearcher {
     private final OpenSearchClient openSearchClient;
 
-    @Value("${lenslog.opensearch.indexVersioned}")
+    @Value("${opensearch.indexVersioned}")
     private String indexName;
 
-    public List<SearchResDto> knnSearch(float[] queryVec, int size) throws Exception {
-        int kCandidates = Math.max(size * 10, 200);
+    // candidateSize: 후보 개수
+    public List<SearchResDto> knnSearch(float[] queryVec, int candidateSize) throws Exception {
+        int kCandidates = Math.max(candidateSize * 2, 200);
 
         var res = openSearchClient.search(s -> s
                 .index(indexName)
-                .size(size) // 최종 반환 개수
+                .size(candidateSize) // 최종 반환 개수
                 .query(q -> q
                     .knn(knn -> knn
                         .field("mmVector")
@@ -40,7 +41,7 @@ public class PhotoVectorSearcher {
         res.hits().hits().forEach(h -> {
             // _id가 photoId로 들어가 있음
             Long id = Long.parseLong(h.id());
-            double score = (h.score() == null ? 0.0 : h.score());
+            double score = (h.score() == null ? 0.0 : h.score()); // 벡터 기반 score
             out.add(new SearchResDto(id, score));
         });
 
