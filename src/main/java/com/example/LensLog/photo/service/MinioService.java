@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.security.InvalidKeyException;
@@ -95,5 +96,32 @@ public class MinioService {
                 .object(storedFileName)
                 .build()
         );
+    }
+
+    @Transactional
+    public byte[] getObjectBytes(String bucketName, String objectName) throws Exception {
+        try (InputStream in = minioClient.getObject(
+            GetObjectArgs.builder()
+                .bucket(bucketName)
+                .object(objectName)
+                .build()
+        )) {
+            return toBytes(in);
+        } catch (Exception e) {
+            log.error("getObjectBytes error bucket = {}, object = {}, msg = {}", bucketName, objectName, e.getMessage());
+            throw e;
+        }
+    }
+
+    private byte [] toBytes(InputStream in) throws IOException{
+        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+        byte[] buf = new byte[8192];
+
+        int read;
+        while ((read = in.read(buf)) != -1) {
+            byteArrayOutputStream.write(buf, 0, read);
+        }
+
+        return byteArrayOutputStream.toByteArray();
     }
 }

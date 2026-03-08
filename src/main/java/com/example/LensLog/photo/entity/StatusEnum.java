@@ -1,7 +1,7 @@
 package com.example.LensLog.photo.entity;
 
-public enum ThumbnailStatusEnum {
-    NONE,
+public enum StatusEnum {
+    PENDING,
     PROCESSING,
     READY,
     FAILED

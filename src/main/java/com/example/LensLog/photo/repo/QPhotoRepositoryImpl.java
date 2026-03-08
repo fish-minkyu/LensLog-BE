@@ -4,7 +4,7 @@ import com.example.LensLog.good.entity.Good;
 import com.example.LensLog.good.entity.QGood;
 import com.example.LensLog.photo.entity.Photo;
 import com.example.LensLog.photo.entity.QPhoto;
-import com.example.LensLog.photo.entity.ThumbnailStatusEnum;
+import com.example.LensLog.photo.entity.StatusEnum;
 import com.querydsl.core.BooleanBuilder;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
@@ -33,7 +33,7 @@ public class QPhotoRepositoryImpl implements QPhotoRepository {
         }
 
         // 썸네일이 생성된 것만 가지고 오기.
-         builder.and(photo.thumbnailStatus.eq(ThumbnailStatusEnum.READY.name()));
+         builder.and(photo.thumbnailStatus.eq(StatusEnum.READY.name()));
 
         return queryFactory
             .selectFrom(photo)

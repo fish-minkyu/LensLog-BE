@@ -30,6 +30,8 @@ public class Photo {
     private LocalDate shotDate;
     // 버킷에 저장된 이미지 경로
     private String bucketFileUrl;
+    // 썸네일 이미지 저장된 경로
+    private String thumbnailUrl;
     // 해시 값(중복 업로드 방지용)
     private String hashValue;
     // 조회수
@@ -37,10 +39,17 @@ public class Photo {
     // 다운로드 횟수
     private Long downloads;
 
-    // 썸네일 이미지 저장된 경로
-    private String thumbnailUrl;
+    // OpenAI caption
+    private String aiCaption;
+    // OpenAI 태그
+    private String aiTags;
+
     // 썸네일 생성 상태
     private String thumbnailStatus;
+    // OpenAI 태깅 상태
+    private String aiTagStatus;
+    // OpenSearch 저장 상태
+    private String searchIndexStatus;
 
     // Category와의 ManyToOne 관계 설정
     // Photo 여러 개는 하나의 카테고리를 가질 수 있다.

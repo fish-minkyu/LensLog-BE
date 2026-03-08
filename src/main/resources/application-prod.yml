@@ -1,3 +1,5 @@
+mode: ${SPRING_PROFILES_ACTIVE}
+
 spring:
   server:
     forward-headers-strategy: native

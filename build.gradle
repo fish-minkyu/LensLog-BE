@@ -73,6 +73,14 @@ dependencies {
     // Mail
     implementation 'org.springframework.boot:spring-boot-starter-mail'
 
+    // OpenSearch Java Client
+    implementation "org.opensearch.client:opensearch-java:2.11.1"
+    implementation "org.opensearch.client:opensearch-rest-client:2.11.1"
+    implementation "com.fasterxml.jackson.core:jackson-databind"
+
+    // OpenAI SDK: 자동 태그, 캡션 보강 용도
+    implementation "com.openai:openai-java:4.20.0"
+
     // bucket4j
     implementation 'com.bucket4j:bucket4j-redis:8.7.1' // Redis 연동을 위한 의존성
 

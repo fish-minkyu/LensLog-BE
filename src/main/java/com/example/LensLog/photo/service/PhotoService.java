@@ -45,6 +45,7 @@ import java.util.stream.Collectors;
 
 import com.drew.metadata.Metadata;
 
+// A. 사진 업로드
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -55,6 +56,9 @@ public class PhotoService {
     private final AuthenticationFacade auth;
     private final GoodRepository goodRepository;
     private final CategoryRepository categoryRepository;
+
+    @Value("${mode}")
+    private String mode;
 
     @Value("${minio.public.endpoint}")
     private String minioPublicEndpoint;
@@ -71,6 +75,8 @@ public class PhotoService {
     // 사진 단일 업로드
     @Transactional
     public void uploadPhoto(MultipartFile multipartFile, PhotoDto dto) throws Exception {
+        //TODO try-catch문 연결하여 에러 발생 시 rollback
+
         // 1. 사진 파일의 해시 값 계산
         String fileHash = HashGenerator.calculateSha256Hash(multipartFile.getInputStream());
 
@@ -97,7 +103,6 @@ public class PhotoService {
 
         // 5. 사진이 중복되지 않는다면 MinIO에 해당 파일을 저장한다.
         String fileName = multipartFile.getOriginalFilename();
-        minioService.savePhotoFile(fileName, multipartFile);
 
         // 6. DB에 Photo의 메타 데이터를 저장한다.
         String minioUrl = minioPublicEndpoint + "/"  + photoBucket + "/" + fileName;
@@ -114,7 +119,10 @@ public class PhotoService {
             .downloads(0L)
             .build();
 
+        // DB 저장
         photoRepository.save(newPhoto);
+        // MinIO Photo 버킷 업로드
+        minioService.savePhotoFile(fileName, multipartFile);
 
         // 화질 이슈로 인한 미사용
         // 7. 트랜잭션이 성공적으로 커밋된 후에 썸네일 생성을 위한 이벤트 발행
@@ -302,13 +310,24 @@ public class PhotoService {
     }
 
     private PhotoDto convertToDto(Photo entity) {
+        String bucketFileUrl;
+        String thumbnailUrl;
+
+        if ("dev".equals(mode)) {
+            bucketFileUrl = minioPublicEndpoint + "/" + photoBucket + "/" + entity.getFileName();
+            thumbnailUrl = minioPublicEndpoint + "/" + thumbnailBucket + "/" + getThumbnailName(entity.getFileName());
+        } else {
+            bucketFileUrl = cdnEndpoint + "/" + photoBucket + "/" + entity.getFileName();
+            thumbnailUrl = cdnEndpoint + "/" + thumbnailBucket + "/" + getThumbnailName(entity.getFileName());
+        }
+
         return PhotoDto.builder()
             .photoId(entity.getPhotoId())
             .fileName(entity.getFileName())
             .location(entity.getLocation())
             .shotDate(entity.getShotDate())
-            .bucketFileUrl(cdnEndpoint + "/" + photoBucket + "/" + entity.getFileName())
-            .thumbnailUrl(cdnEndpoint + "/" + thumbnailBucket + "/" + getThumbnailName(entity.getFileName()))
+            .bucketFileUrl(bucketFileUrl)
+            .thumbnailUrl(thumbnailUrl)
             .views(entity.getViews())
             .downloads(entity.getDownloads())
             .likeCount(entity.getGoods().size())

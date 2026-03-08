@@ -20,6 +20,8 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    networks:
+      - my-network
 
   # 2. Redis 서비스 정의
   redis:
@@ -30,6 +32,8 @@ services:
     command: redis-server --requirepass ${REDIS_SERVICE_PASSWORD} # .env에서 가져옴
     volumes:
       - redis_data:/data
+    networks:
+      - my-network
 
   # 3. MinIO 서비스 정의
   minio:
@@ -52,8 +56,48 @@ services:
       timeout: 20s
       retries: 3
       start_period: 30s
+    networks:
+      - my-network
 
-  # 4. Spring Boot 애플리케이션 서비스 정의
+  # 4. OpenSearch
+  opensearch:
+    image: opensearchproject/opensearch:2.11.1
+    container_name: opensearch
+    environment:
+      discovery.type: single-node
+      plugins.security.disabled: "true"
+      OPENSEARCH_JAVA_OPTS: "-Xms512m -Xmx512m"
+    ports:
+      - "9200:9200"
+      - "9600:9600"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9200"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 30s
+    networks:
+      - my-network
+
+  # 5. Embedding(CLIP) 서버 정의
+  embedding:
+    build:
+      context: ../LensLog-embedding
+      dockerfile: Dockerfile
+    container_name: embedding
+    ports:
+      - "8001:8001"
+    restart: unless-stopped
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8001/docs" ]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 30s
+    networks:
+      - my-network
+
+  # 6. Spring Boot 애플리케이션 서비스 정의
   lenslog-be:
     build: .
     container_name: lenslog-be
@@ -71,6 +115,12 @@ services:
         condition: service_started
       minio:
         condition: service_healthy
+      opensearch:
+        condition: service_healthy
+      embedding:
+        condition: service_healthy
+    networks:
+      - my-network
 
 # 볼륨 정의: 컨테이너가 삭제되어도 데이터가 유지되도록 함
 volumes:

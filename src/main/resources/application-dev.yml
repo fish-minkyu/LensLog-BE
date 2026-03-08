@@ -1,3 +1,5 @@
+mode: ${SPRING_PROFILES_ACTIVE}
+
 spring:
   datasource:
     url: ${SPRING_DATASOURCE_URL:jdbc:mysql://localhost:3306/LensLog?serverTimezone=Asia/Seoul&characterEncoding=UTF-8}
@@ -123,6 +125,27 @@ springdoc:
     path: /swagger
   api-docs:
     path: /api-docs
+
+opensearch:
+  host: ${OPENSEARCH_HOST}
+  port: ${OPENSEARCH_PORT}
+  scheme: http
+  username: ${OPENSEARCH_USERNAME}
+  password: ${OPENSEARCH_PASSWORD}
+
+lenslog:
+  opensearch:
+    indexAlias: lenslog-photos
+    indexVersioned: lenslog-photos-v1
+    initIndex: true
+
+embedding:
+  baseUrl: ${EMBEDDING_BASEURL}
+  timeoutMs: 15000
+
+openai:
+  apiKey: ${OPENAI_API_KEY}
+  model: ${OPENAI_MODEL}
 
 # Naver
 #            "response": {

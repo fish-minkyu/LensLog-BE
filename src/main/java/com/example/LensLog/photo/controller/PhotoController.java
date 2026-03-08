@@ -3,12 +3,15 @@ package com.example.LensLog.photo.controller;
 import com.example.LensLog.photo.dto.PhotoCursorPageDto;
 import com.example.LensLog.photo.dto.PhotoDto;
 import com.example.LensLog.photo.service.PhotoService;
+import com.example.LensLog.search.query.service.PhotoSearchService;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+
+import java.util.List;
 
 
 @Tag(name = "Photo Controller", description = "사진 관련 API")
@@ -17,6 +20,7 @@ import org.springframework.web.multipart.MultipartFile;
 @RequiredArgsConstructor
 public class PhotoController {
     private final PhotoService photoService;
+    private final PhotoSearchService searchService;
 
     // 사진 생성
     @PostMapping("/upload")
@@ -40,6 +44,15 @@ public class PhotoController {
     @GetMapping("/getOne/{photoId}")
     public PhotoDto getPhoto(@PathVariable("photoId") Long photoId) {
         return photoService.getPhoto(photoId);
+    }
+
+    // 사진 검색
+    @GetMapping("/search")
+    public List<PhotoDto> search(
+        @RequestParam String query,
+        @RequestParam(defaultValue = "30") int size
+    ) throws Exception {
+        return searchService.search(query, size);
     }
 
     // 사진 다운로드

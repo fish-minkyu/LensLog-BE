@@ -1,7 +1,8 @@
 package com.example.LensLog.photo.service;
 
 import com.example.LensLog.photo.entity.Photo;
-import com.example.LensLog.photo.entity.ThumbnailStatusEnum;
+import com.example.LensLog.photo.entity.StatusEnum;
+import com.example.LensLog.photo.event.PhotoThumbnailReadyEvent;
 import com.example.LensLog.photo.event.PhotoUploadEvent;
 import com.example.LensLog.photo.repo.PhotoRepository;
 import com.sksamuel.scrimage.ImmutableImage;
@@ -13,6 +14,7 @@ import io.minio.PutObjectArgs;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.retry.annotation.Backoff;
 import org.springframework.retry.annotation.Retryable;
 import org.springframework.scheduling.annotation.Async;
@@ -24,6 +26,7 @@ import org.springframework.transaction.event.TransactionalEventListener;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 
+// B. 썸네일 업로드
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -31,6 +34,7 @@ public class ThumbnailService {
     private final PhotoRepository photoRepository;
     private final MinioService minioService;
     private final MinioClient minioClient;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Value("${minio.public.endpoint}")
     private String minioPublicEndpoint;
@@ -46,12 +50,9 @@ public class ThumbnailService {
     )
     // uploadPhoto 트랜잭션이 성공적으로 커밋된 후 호출
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
-    public void handlePhotoUploadEvent(PhotoUploadEvent event) throws Exception {
-        generateThumbnail(event.getPhotoId());
-    }
+    public void generateThumbnailEvent(PhotoUploadEvent event) throws Exception {
+        Long photoId = event.getPhotoId();
 
-    @Transactional
-    public void generateThumbnail(Long photoId) throws Exception {
         log.info("Started thumbnail generation for Photo ID: {}", photoId);
 
         Photo photo = photoRepository.findById(photoId)
@@ -59,7 +60,7 @@ public class ThumbnailService {
 
         try {
             // 썸네일 생성 상태를 PROCESSING으로 변경한다.
-            photo.setThumbnailStatus(ThumbnailStatusEnum.PROCESSING.name());
+            photo.setThumbnailStatus(StatusEnum.PROCESSING.name());
 
             // 썸네일용 파일 이름을 만든다.
             String fileName = photo.getFileName();
@@ -90,21 +91,24 @@ public class ThumbnailService {
                 // 썸네일 URL을 생성하고, DB 업데이트
                 String thumbnailUrl = minioPublicEndpoint + "/" + thumbnailBucket + "/" + thumbnailFileName;
                 photo.setThumbnailUrl(thumbnailUrl);
-                photo.setThumbnailStatus(ThumbnailStatusEnum.READY.name());
+                photo.setThumbnailStatus(StatusEnum.READY.name());
                 photoRepository.save(photo);
 
                 log.info("Thumbnail generation completed for Photo ID: {}", photoId);
+
+                // "썸네일 준비됨' 이벤트 발행
+                eventPublisher.publishEvent(new PhotoThumbnailReadyEvent(photoId));
             }
         } catch (Exception e) {
             log.error("Thumbnail generation failed for Photo ID: {} - {}", photoId, e.getMessage());
-            photo.setThumbnailStatus(ThumbnailStatusEnum.FAILED.name());
+            minioService.deleteFile(thumbnailBucket, photo);
+            photo.setThumbnailStatus(StatusEnum.FAILED.name());
             photoRepository.save(photo);
             throw e;
         }
     }
 
-    // 썸네일 사진 업로드 메소드
-    @Transactional
+    // MinIO 썸네일 사진 업로드 메소드
     public String saveThumbnailFile(String storedFileName, InputStream inputStream, long size) throws Exception {
         // 환경변수로 설정한 버킷이 존재한지 확인한다.
         boolean isExist = minioClient.bucketExists(
