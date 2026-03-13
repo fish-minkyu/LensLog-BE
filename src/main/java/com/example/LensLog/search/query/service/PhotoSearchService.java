@@ -7,6 +7,7 @@ import com.example.LensLog.search.indexing.EmbeddingClient;
 import com.example.LensLog.search.dto.SearchResDto;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -20,14 +21,15 @@ import java.util.stream.Collectors;
 // - OpenSearch 검색
 // - DB 재조회
 // - PhotoDto + score 조합
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class PhotoSearchService {
-
     private final EmbeddingClient embeddingClient;
     private final PhotoVectorSearcher vectorSearchService;
     private final PhotoRepository photoRepository;
     private final ObjectMapper objectMapper; // Spring ObjectMapper Bean 주입 추천
+    private final double minScore = 0.8;
 
     public List<PhotoDto> search(String query, int size) throws Exception {
         float[] qVec = embeddingClient.embedText(query);
@@ -42,6 +44,10 @@ public class PhotoSearchService {
         for (Photo p : photosIt) {
             photoMap.put(p.getPhotoId(), p);
         }
+
+        log.info("candidates size = " + candidates.size());
+        log.info("candidate ids = " + candidates.stream().map(SearchResDto::photoId).toList());
+        log.info("DB found ids = " + photoMap.keySet());
 
         List<String> tokens = tokenize(query);
 
@@ -61,6 +67,9 @@ public class PhotoSearchService {
         List<PhotoDto> result = new ArrayList<>();
         for (int i = 0; i < Math.min(size, reranked.size()); i++) {
             Reranked r = reranked.get(i);
+            // 최소 점수 확인 (0.8점 이하일 시, pass)
+            if (r.score() < minScore) continue;
+
             Photo p = r.photo();
 
             result.add(PhotoDto.builder()
@@ -92,6 +101,7 @@ public class PhotoSearchService {
         return parts;
     }
 
+    // tag와 caption을 꺼내서 토큰 매칭 보너스를 더해 최종 점수를 만드는 메서드
     private double calcTextBonus(Photo photo, List<String> tokens) {
         if (tokens == null || tokens.isEmpty()) return 0.0;
 

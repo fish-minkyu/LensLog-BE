@@ -70,6 +70,8 @@ services:
     ports:
       - "9200:9200"
       - "9600:9600"
+    volumes:
+      - opensearch_data:/usr/share/opensearch/data
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:9200"]
       interval: 10s
@@ -127,6 +129,7 @@ volumes:
   mysql_data:
   redis_data:
   minio_data:
+  opensearch_data:
 
 networks:
   my-network:

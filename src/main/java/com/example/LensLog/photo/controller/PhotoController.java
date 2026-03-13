@@ -71,7 +71,6 @@ public class PhotoController {
         photoService.deletePhoto(photoId);
     }
 
-    //TODO 관리자만 가능하도록 WebSecurityConfig 설정 필요
     @PutMapping("/retry/tags")
     public Boolean retryAiTags() throws Exception {
         return photoService.retryAiTagsAndSearchIndexing();

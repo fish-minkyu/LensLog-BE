@@ -112,6 +112,8 @@ public class WebSecurityConfig {
                 )
                 .hasRole("ADMIN")
                 .requestMatchers(HttpMethod.PUT,
+                    // photo API
+                    "/api/photo/retry/tags",
                     // category API
                     "/api/category/update/{categoryId}")
                 .hasRole("ADMIN")

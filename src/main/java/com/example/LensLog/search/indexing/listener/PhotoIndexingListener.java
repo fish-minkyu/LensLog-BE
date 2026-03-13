@@ -62,6 +62,7 @@ public class PhotoIndexingListener {
         backoff = @Backoff(delay = 1000, multiplier = 2) // 지수 백오프: 1초, 2초, 4초
     )
     public void doing(Long photoId, Photo photo) throws Exception {
+        log.info("photoId: {}, AI tagging & indexing start", photo.getPhotoId());
         try {
             // C. OPenAI 태깅 작업 시작
             // OpenAI 태깅용 이미지 bytes

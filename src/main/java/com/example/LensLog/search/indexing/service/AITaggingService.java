@@ -99,14 +99,17 @@ public class AITaggingService {
                 );
             }
         } catch (HttpStatusCodeException e) {
+            // 4xx/5xx가 여기로 들어옴 (401, 429, 400 포함)
             String resBody = e.getResponseBodyAsString();
             throw new AiTaggingException(
                 photoId,
                 AiTaggingException.AiErrorReason.NON_2XX,
-                "Gemini returned " + e.getStatusCode() + " body=" + resBody,
+                "Gemini returned about " + "photoId: " + photoId + " "
+                    + e.getStatusCode() + " body=" + resBody,
                 e
             );
         } catch (ResourceAccessException e) {
+            // 타임아웃, DNS, 연결 문제
             throw new AiTaggingException(
                 photoId,
                 AiTaggingException.AiErrorReason.HTTP_ERROR,
