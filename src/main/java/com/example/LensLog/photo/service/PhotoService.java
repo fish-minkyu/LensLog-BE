@@ -77,8 +77,6 @@ public class PhotoService {
     // 사진 단일 업로드
     @Transactional
     public void uploadPhoto(MultipartFile multipartFile, PhotoDto dto) throws Exception {
-        //TODO try-catch문 연결하여 에러 발생 시 rollback
-
         // 1. 사진 파일의 해시 값 계산
         String fileHash = HashGenerator.calculateSha256Hash(multipartFile.getInputStream());
 
