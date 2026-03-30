@@ -6,11 +6,14 @@ import com.example.LensLog.photo.repo.PhotoRepository;
 import com.example.LensLog.search.indexing.EmbeddingClient;
 import com.example.LensLog.search.dto.SearchResDto;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.micrometer.common.util.StringUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.core.type.TypeReference;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -32,6 +35,11 @@ public class PhotoSearchService {
     private final double minScore = 0.8;
 
     public List<PhotoDto> search(String query, int size) throws Exception {
+        query = query == null ? "" : query.trim();
+        if (query.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "검색어를 입력해주세요.");
+        }
+
         float[] qVec = embeddingClient.embedText(query);
 
         int candidatesSize = Math.max(size * 20, 300);
