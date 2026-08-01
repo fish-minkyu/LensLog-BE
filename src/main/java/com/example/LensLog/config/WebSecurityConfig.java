@@ -6,9 +6,11 @@ import com.example.LensLog.auth.oatuh.OAuth2SuccessHandler;
 import com.example.LensLog.auth.oatuh.OAuth2UserServiceImpl;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -37,6 +39,9 @@ public class WebSecurityConfig {
     private final UserDetailsService manager;
     private final OAuth2SuccessHandler oAuth2SuccessHandler;
     private final OAuth2UserServiceImpl oAuth2UserService;
+    private final StringRedisTemplate redisTemplate;
+
+
 
     // Http 관련 보안 설정하는 객체
     @Bean
@@ -92,7 +97,11 @@ public class WebSecurityConfig {
                 .authenticated()
                 .requestMatchers(HttpMethod.POST,
                     // auth API
-                    "/api/auth/refresh",
+                    "/api/auth/refresh"
+                )
+                .permitAll()
+                .requestMatchers(HttpMethod.POST,
+                    // auth API
                     "/api/auth/logout",
                     // Good API
                     "/api/good/{photoId}"
@@ -142,7 +151,8 @@ public class WebSecurityConfig {
             .addFilterBefore(
                 new JwtTokenFilter(
                     jwtTokenUtils,
-                    manager
+                    manager,
+                    redisTemplate
                 ),
                 AuthorizationFilter.class
             );

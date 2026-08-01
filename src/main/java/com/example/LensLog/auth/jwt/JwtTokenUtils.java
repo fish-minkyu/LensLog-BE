@@ -1,19 +1,29 @@
 package com.example.LensLog.auth.jwt;
 
+import com.example.LensLog.constant.TokenConstant;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtParser;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.ValueOperations;
+import org.springframework.security.authentication.AbstractAuthenticationToken;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.stereotype.Component;
 import org.springframework.data.redis.core.StringRedisTemplate;
 
 import java.security.Key;
 import java.util.Date;
 import java.time.Instant;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
@@ -27,12 +37,16 @@ public class JwtTokenUtils {
     private final JwtParser jwtParser; // parser: 특정한 형식의 문자열을 데이터로 다시 역직렬화하는 것
     // Refresh Token을 Redis에 관리하기 위한 객체
     private final StringRedisTemplate redisTemplate;
+    private final UserDetailsService manager;
 
+    @Value("${https.secure}")
+    private boolean setSecure;
 
     public JwtTokenUtils(
         @Value("${jwt.secret}")
         String jwtSecret,
-        StringRedisTemplate redisTemplate
+        StringRedisTemplate redisTemplate,
+        UserDetailsService manager
     ) {
         log.info(jwtSecret);
         // jjwt에서 key를 활용하기 위한 준비
@@ -42,12 +56,13 @@ public class JwtTokenUtils {
             .setSigningKey(this.signingKey)
             .build();
         this.redisTemplate = redisTemplate;
+        this.manager = manager;
     }
 
     // UserDetails를 받아서 JWT로 변환하는 메서드
     // UserDetails를 받아서 사용하는 이유는, Spring Security에서 UserDetails를 사용하고 있기 때문이다.
     public String generateToken(UserDetails userDetails) {
-        // JWT에 담고싶은 정보를 Claims로 만든다.
+        // JWT에 담고싶은 정보를 Claims로 만든다. <- Claims는 JWT Payload에 담기는 key-value 형태의 정보 조각들이다.
         // sub: 누구인지
         // iat: 언제 발급 되었는지
         // exp: 언제 만료 예정인지
@@ -118,6 +133,18 @@ public class JwtTokenUtils {
         return false;
     }
 
+    // 서명은 유효하지만 만료된 토큰인지 확인하는 메서드
+    public boolean isExpiredToken(String token) {
+        try {
+            jwtParser.parseClaimsJws(token);
+            return false;
+        } catch (io.jsonwebtoken.ExpiredJwtException e) {
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
     // 실제 데이터(Payload)를 반환하는 메서드
     public Claims parseClaims(String token) {
         return jwtParser
@@ -152,5 +179,78 @@ public class JwtTokenUtils {
         if (Boolean.TRUE.equals(redisTemplate.hasKey(redisKey))) {
             redisTemplate.delete(redisKey);
         }
+    }
+
+    // Refresh Token을 이용해 Access Token과 Refresh Token을 재발급하는 메소드
+    public void tryAutoRefresh(String refreshToken, HttpServletResponse response) {
+        try {
+            if (!validate(refreshToken)) {
+                log.warn("refresh token is invalid or expired");
+                return;
+            }
+
+            String username = extractUsername(refreshToken);
+            String redisKey = extractRediskey(refreshToken);
+
+            // Redis에 저장된 Refresh Token인지 확인
+            String storedToken = redisTemplate.opsForValue().get(redisKey);
+            if (storedToken == null || !storedToken.equals(refreshToken)) {
+                log.warn("refresh token not found in redis or mismatch");
+                return;
+            }
+
+            UserDetails userDetails = manager.loadUserByUsername(username);
+            if (!validateToken(refreshToken, userDetails)) {
+                log.warn("refresh token validation failed for user: {}", username);
+                return;
+            }
+
+            // 기존 Refresh Token 삭제 (Token Rotation)
+            deleteRefreshToken(redisKey);
+
+            // 새 Access Token & Refresh Token 발급 후 쿠키 설정
+            String newAccessToken = generateToken(userDetails);
+            String newRefreshToken = generateRefreshToken(userDetails);
+            addCookie(TokenConstant.ACCESS_TOKEN, newAccessToken, response);
+            addCookie(TokenConstant.REFRESH_TOKEN, newRefreshToken, response);
+
+            // SecurityContext 설정
+            SecurityContext context = SecurityContextHolder.createEmptyContext();
+            AbstractAuthenticationToken authentication =
+                new UsernamePasswordAuthenticationToken(
+                    userDetails,
+                    newAccessToken,
+                    userDetails.getAuthorities()
+                );
+            context.setAuthentication(authentication);
+            SecurityContextHolder.setContext(context);
+            log.info("auto token refresh successful for user: {}", username);
+
+        } catch (Exception e) {
+            log.warn("auto token refresh failed: {}", e.getMessage());
+        }
+    }
+
+    // 쿠키 추가 메소드
+    private void addCookie(String name, String token, HttpServletResponse response) {
+        Cookie cookie = new Cookie(name, token);
+        cookie.setHttpOnly(true);
+        cookie.setSecure(setSecure);
+        cookie.setPath("/");
+        response.addCookie(cookie);
+    }
+
+    // 쿠키에서 Token을 추출하는 메소드
+    public String extractToken(HttpServletRequest request, String tokenSort) {
+        Cookie[] cookies = Optional.ofNullable(request.getCookies())
+            .orElse(new Cookie[0]);
+
+        for (Cookie cookie : cookies) {
+            if (tokenSort.equals(cookie.getName())) {
+                return cookie.getValue();
+            }
+        }
+
+        return null;
     }
 }
